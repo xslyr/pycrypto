@@ -1,2 +1,3 @@
 # pycrypto
-for now just a project for me to have fun programming
+
+Future open-source robot example for crypto-trading on binance.
