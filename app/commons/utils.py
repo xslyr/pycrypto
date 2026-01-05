@@ -1,0 +1,175 @@
+import os
+import pandas as pd
+from datetime import datetime, timedelta, timezone
+from typing import Any
+from enum import Enum
+
+# https://python-binance.readthedocs.io/en/latest/constants.html
+
+DataSources = Enum('OriginsAvailable',['database','websocket'])
+
+class Timing:
+
+    intervals_available = ['1s','1m','3m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d']
+    
+    delta_intervals = {
+        '1s': timedelta(seconds=1),
+        '1m': timedelta(minutes=1),
+        '3m': timedelta(minutes=3),
+        '5m': timedelta(minutes=5),
+        '15m': timedelta(minutes=15),
+        '30m': timedelta(minutes=30),
+        '1h': timedelta(hours=1),
+        '2h': timedelta(hours=2),
+        '4h': timedelta(hours=4),
+        '6h': timedelta(hours=6),
+        '8h': timedelta(hours=8),
+        '12h': timedelta(hours=12),
+        '1d': timedelta(days=1)
+    }
+
+    @staticmethod
+    def get_timezone():
+        return timezone( timedelta(hours=0) )
+    
+
+    @staticmethod
+    def convert_any_to_datetime( _datetime:Any ):
+        tz = Timing.get_timezone()
+        match _datetime:
+            case str():
+                if len(_datetime)!=19:
+                    raise Exception('On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param.')
+                adjusted_start_time = datetime.strptime(_datetime, '%Y-%m-%d %H:%M:%S').astimezone(tz)
+            case int()|float():
+                if len( str(int(_datetime)) ) > 10:
+                    adjusted_start_time = datetime.fromtimestamp(_datetime/1000, tz=tz)
+                else:
+                    adjusted_start_time = datetime.fromtimestamp(_datetime, tz=tz)
+                
+        return adjusted_start_time
+
+
+    @staticmethod
+    def convert_any_to_timestamp( _datetime:Any ):
+        tz = Timing.get_timezone()
+        match _datetime:
+            case str(): 
+                if len(_datetime)!=19:
+                    raise Exception('On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param.')
+                adjusted_start_time = int(datetime.strptime(_datetime, '%Y-%m-%d %H:%M:%S').astimezone(tz).timestamp()*1000)
+
+            case int() | float():
+                if len(str(_datetime)) < 13:
+                    adjusted_start_time = int(str(int(_datetime)).ljust(13,'0'))
+
+            case datetime() :
+                adjusted_start_time = int( _datetime.astimezone(tz).timestamp() *1000)
+            
+            case _: adjusted_start_time = _datetime.astimezone(tz)
+
+        return adjusted_start_time
+    
+    
+    @staticmethod
+    def get_timestamp_range_list( start:datetime, end:datetime, interval:str):
+        freq = interval if 'm' not in interval else interval + 'in'
+        tz = Timing.get_timezone()
+        return pd.date_range( start=start, end=end, freq=freq, tz=tz).values.astype(int) // 10**9
+
+
+
+
+class DatabaseDescription:
+    db_structure = {
+        'app_config' : {
+            'columns': {
+                'key':'varchar(50) not null',
+                'value':'text'
+            },
+            'primary_key': 'primary key (key)'
+        },
+        'klines_tables' : {
+            'columns': {
+                'ticker':'varchar(10) not null',
+                'open_time': 'bigint not null',
+                'open': 'real not null',
+                'high': 'real not null',
+                'low': 'real not null',
+                'close': 'real not null',
+                'base_asset_volume': 'double precision not null',  # base_asset_volume
+                'close_time': 'bigint not null',
+                'quote_asset_volume': 'double precision not null',
+                'number_of_trades': 'bigint not null',
+                'taker_buy_base_asset_volume': 'double precision not null',
+                'taker_buy_quote_asset_volume': 'double precision not null'
+            },
+            'primary_key': 'primary key (ticker, open_time)'
+        }
+    }
+    qty_tables = len(db_structure.keys()) + len(Timing.intervals_available) -1
+
+
+class Singleton(type):
+    _instance = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instance:
+            cls._instance[cls] = super().__call__(*args, **kwargs)
+        return cls._instance[cls]
+    
+    @classmethod
+    def _reset_all(cls):
+        cls._instance.clear()
+
+
+class BrokerUtils:
+    
+    kline_columns = [
+        'open_time','close_time','open', 'close','high','low','base_asset_volume',
+        'quote_asset_volume','number_of_trades','taker_buy_base_asset_volume',
+        'taker_buy_quote_asset_volume','ignore'
+    ]
+
+    ws_columns_names = {
+        'open_time': 't',
+        'close_time': 'T',
+        'ticker': 's',
+        'interval': 'i',
+        'first_trade_id': 'f',
+        'last_trade_id': 'L',
+        'open': 'o',
+        'close': 'c',
+        'high': 'h',
+        'low': 'l',
+        'base_asset_volume': 'v',
+        'number_of_trades': 'n',
+        'is_kline_closed': 'x',
+        'quote_asset_volume': 'q',
+        'taker_buy_base_asset_volume': 'V',
+        'taker_buy_quote_asset_volume': 'Q',
+        'ignore': 'B'
+    }
+
+    ws_columns_dtype = {
+        'open_time': ('open_time' , 'i8'),
+        'close_time': ('close_time' , 'i8'),
+        'ticker': ('ticker' , 'S10'),
+        'interval': ('interval' , 'S3'),
+        'first_trade_id': ('first_trade_id' , 'i8'),
+        'last_trade_id': ('last_trade_id' , 'i8'),
+        'open': ('open' , 'f8'),
+        'close': ('close' , 'f8'),
+        'high': ('high' , 'f8'),
+        'low': ('low' , 'f8'),
+        'base_asset_volume': ('base_asset_volume' , 'f8'),
+        'number_of_trades': ('number_of_trades' , 'i8'),
+        'is_kline_closed': ('is_kline_closed' , '?'),
+        'quote_asset_volume': ('quote_asset_volume' , 'f8'),
+        'taker_buy_base_asset_volume': ('taker_buy_base_asset_volume' , 'f8'),
+        'taker_buy_quote_asset_volume': ('taker_buy_quote_asset_volume' , 'f8'),
+        'ignore': ('ignore' , '?')
+    }
+    
+    
+    websocket_opened_maxlen = { '1s':60, '1m':60, '3m':20, '5m':12, '15m':4, '30m':2, '1h':24, '2h':12, '4h':6, '6h':4, '8h':3, '12h':2, '1d':1 }
+
