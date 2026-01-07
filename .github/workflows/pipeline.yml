@@ -54,4 +54,4 @@ jobs:
         run: poetry install --without doc --no-interaction
 
       - name: Run tests
-        run: poetry run task gittest
+        run: poetry run task test_all
