@@ -1,4 +1,4 @@
-name: 'cryptoshark'
+name: 'pycrypto'
 
 services:
   db:

@@ -19,7 +19,7 @@ class BinanceSpot(metaclass=Singleton):
         load_dotenv()
         self.test_mode = test_mode
         self._client = Spot(os.getenv("BINANCE_APIKEY"), os.getenv("BINANCE_SECRETKEY"))
-        logger.info("Binance_Spot_v1 initializated. ")
+        logger.info("BinanceSpot initializated.")
 
     def wallet(self):
         wallet = {dc["asset"]: dc["free"] for dc in self._client.user_asset()}
@@ -52,7 +52,7 @@ class BinanceSpot(metaclass=Singleton):
         start_time: Any,
         as_dict=False,
         limit: int = 1000,
-    ):
+    ) -> np.ndarray | list[dict]:
         try:
             adjusted_start_time = Timing.convert_any_to_timestamp(start_time)
             data = self._client.klines(
@@ -73,20 +73,20 @@ class BinanceSpot(metaclass=Singleton):
                 "number_of_trades",
                 "taker_buy_base_asset_volume",
                 "taker_buy_quote_asset_volume",
-                "ignore",
             ]
             dtypes = list(itemgetter(*cols)(BrokerUtils.ws_columns_dtype))
 
             if not as_dict:
-                data_return = np.fromiter((tuple(row) for row in data), dtype=dtypes)
+                data_return = np.fromiter((tuple(row[:-1]) for row in data), dtype=dtypes)
 
             else:
                 data_return = [dict(zip(cols, row)) for row in data]
 
             logger.info(f"Successful klines request of {ticker} on {interval} interval.")
             return data_return
-        except Exception as e:
-            return e
+        except Exception:
+            logger.warning(f"Error on spot.klines. Ticker: {ticker}, Interval:{interval}")
+            raise
 
     def buy(self, ticker: str, quantity: int, operation_type="MARKET"):
         try:
@@ -104,6 +104,7 @@ class BinanceSpot(metaclass=Singleton):
             logger.info(f"Successful buy request for {quantity} of ticker {ticker}.")
             return True
         except Exception as e:
+            logger.exception(f"Error on buy method. Ticker {ticker}, Qty: {quantity}, Type: {operation_type}")
             return e
 
     def sell(self, ticker: str, quantity: int, operation_type="MARKET"):

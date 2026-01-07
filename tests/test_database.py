@@ -5,12 +5,14 @@ import pandas as pd
 import psycopg
 import pytest
 
+from pycrypto.broker import Broker
 from pycrypto.commons import Database
 from pycrypto.orchestration import Loader
 
-
-def f_opentime(x):
-    return int((datetime(2025, 1, 1) + timedelta(minutes=x)).timestamp() * 1000)
+br = Broker(test_mode=True)
+base_from = datetime(2025, 1, 1)
+data = br.get_klines("BTCUSDT", "1d", base_from)
+data_len = len(data)
 
 
 def test_dbclass_must_connect():
@@ -39,29 +41,29 @@ def test_dbclass__can_clean_kline_tables():
 
 
 @pytest.mark.delete_db_data
-def test_dbclass_can_insert_klines():
+def test_dbclass_can_insert_klines_as_tuple():
+    cb = Database()
+    cb.check_fix_db_integrity()
+    cb.clean_kline_table(["1d"])
+    assert cb.insert_klines("BTCUSDT", "1d", data)
+
+
+@pytest.mark.delete_db_data
+def test_dbclass_can_insert_klines_as_dict():
     cb = Database()
     cb.check_fix_db_integrity()
     cb.clean_kline_table(["1m"])
-    arr1 = np.array([f_opentime(i) for i in range(5)]).reshape(-1, 1)
-    arr2 = np.array([list(range(11))] * 5)
-    data = pd.DataFrame(np.hstack((arr1, arr2))).to_records(index=False).tolist()
-    assert cb.insert_klines("BTCUSDT", "1m", data)
-
-
-# Testes para o Loader_Data, onde há o insert de dados fictícios
+    data_dict = br.get_klines("BTCUSDT", "1d", start_time=base_from, as_dict=True)
+    assert cb.insert_klines("BTCUSDT", "1d", data_dict)
 
 
 @pytest.mark.delete_db_data
 def test_dbclass_can_select_klines():
     cb = Database()
     cb.check_fix_db_integrity()
-    cb.clean_kline_table(["1m"])
-    arr1 = np.array([f_opentime(i) for i in range(5)]).reshape(-1, 1)
-    arr2 = np.array([list(range(11))] * 5)
-    data = pd.DataFrame(np.hstack((arr1, arr2))).to_records(index=False).tolist()
-    cb.insert_klines("BTCUSDT", "1m", data)
-    assert len(cb.select_klines("BTCUSDT", "1m", from_datetime=datetime(2025, 1, 1))) == 5
+    cb.clean_kline_table(["1d"])
+    cb.insert_klines("BTCUSDT", "1d", data)
+    assert len(cb.select_klines("BTCUSDT", "1d", from_datetime=base_from)) == data_len
 
 
 @pytest.mark.delete_db_data

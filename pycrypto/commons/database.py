@@ -1,9 +1,8 @@
 import logging
 import os
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 
 import numpy as np
-import pandas as pd
 import psycopg
 from psycopg import Connection, OperationalError, sql
 
@@ -146,7 +145,7 @@ class Database(metaclass=Singleton):
         cur = self.conn.cursor()
         return cur.execute(query, params).fetchall()
 
-    def insert_klines(self, ticker: str, interval: str, data: list) -> bool:
+    def insert_klines(self, ticker: str, interval: str, data: np.ndarray | list[Dict]) -> bool:
         try:
             table = f"klines_{interval}"
             columns = DatabaseDescription.db_structure["klines_tables"]["columns"].keys()
@@ -157,11 +156,11 @@ class Database(metaclass=Singleton):
             base_sql = "INSERT INTO {} ({}) VALUES ({}) ON CONFLICT (ticker, open_time) DO NOTHING;"
             query = sql.SQL(base_sql).format(sql.Identifier(table), column_names, placeholders)
 
-            limit = len(data)
-            arr1 = np.array([ticker] * limit).reshape(-1, 1)
-            arr2 = np.array(data)[:, :-1]
+            if isinstance(data, np.ndarray):
+                data_to_insert = [(ticker, *row) for row in data.tolist()]
 
-            data_to_insert = pd.DataFrame(np.hstack((arr1, arr2))).to_records(index=False).tolist()
+            else:
+                data_to_insert = [(ticker, *row.values()) for row in data]
 
             cur = self.conn.cursor()
             cur.executemany(query, data_to_insert)
@@ -170,5 +169,5 @@ class Database(metaclass=Singleton):
 
         except Exception:
             self.conn.rollback()
-            logger.exception(f"Error on inserting klines, ticker {ticker}, interval {interval}, data: {data}")
+            logger.exception(f"Error on inserting klines, ticker {ticker}, interval {interval}, data: {data[:3]}...")
             raise

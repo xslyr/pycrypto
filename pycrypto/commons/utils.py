@@ -61,6 +61,8 @@ class Timing:
                     adjusted_start_time = datetime.fromtimestamp(_datetime / 1000, tz=Timing.tz)
                 else:
                     adjusted_start_time = datetime.fromtimestamp(_datetime, tz=Timing.tz)
+            case datetime():
+                adjusted_start_time = _datetime.astimezone(Timing.tz)
 
         return adjusted_start_time
 

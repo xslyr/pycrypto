@@ -28,8 +28,8 @@ class Loader:
     """
 
     def __init__(self, test_mode=False, **kwargs):
-        self.db = kwargs.get("database", Database())
-        self.br = kwargs.get("broker", Broker(test_mode))
+        self.db: Database = kwargs.get("database", Database())
+        self.br: Broker = kwargs.get("broker", Broker(test_mode))
 
     def __check_datetime_params(self, from_datetime: Any, between_datetimes: Any):
         """Wrapper for check datetime params.
@@ -197,4 +197,4 @@ class Loader:
         except Exception:
             self.db.rollback()
             logger.exception("Error on loading binance data into db.")
-            return False
+            raise
