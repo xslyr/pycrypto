@@ -1,0 +1,57 @@
+name: Pipeline
+on: [push, pull_request]
+
+env:
+  REDIS_KLINES_MAXLEN: 1000 
+  BINANCE_APIKEY: ${{ secrets.BINANCE_APIKEY }}
+  BINANCE_SECRETKEY: ${{ secrets.BINANCE_SECRETKEY }}
+
+jobs:
+  test_job:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:8-alpine
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: poetry install --without doc --no-interaction
+
+      - name: Run tests
+        run: poetry run task gittest

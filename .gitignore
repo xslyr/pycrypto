@@ -172,3 +172,16 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+*__pycache__*
+.python-version
+.vscode
+.gitignore
+archived
+data
+logs/*
+*.ipynb
+.ipynb_checkpoints
+
+

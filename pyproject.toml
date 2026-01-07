@@ -50,8 +50,9 @@ python = ">=3.13,<4.0"
 [tool.taskipy.tasks]
 lint = "pylint pycrypto/"
 ruff = "ruff format ./pycrypto && ruff check --fix ./pycrypto"
-pre_test = "docker compose up -d"
+pre_test = "docker compose up -d && sleep 5"
 test = "pytest -s -m 'not delete_db_data' --cov=pycrypto -v; coverage html"
+gittest = "pytest -s -v"
 docs = "mkdocs serve -w . --watch-theme -a 'localhost:8081'"
 
 # ------------------------- pytest -------------------------
