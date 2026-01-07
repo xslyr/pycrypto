@@ -1,3 +1,3 @@
 # pycrypto
 
-Future open-source robot example for crypto-trading on binance.
+Crypto-trading Robot for binance users.

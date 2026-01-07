@@ -1,3 +1,4 @@
+
 [project]
 name = "pycrypto"
 version = "0.1.0"
@@ -6,6 +7,7 @@ authors = [{ name="Wesley Silva", email="wesleysilv@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.13"
 package-mode = false
+
 dependencies = [
     "dotenv (>=0.9.9,<0.10.0)",
     "numpy (>=2.2,<3.0)",
@@ -30,8 +32,8 @@ dev = [
     "pytest-cov (>=7.0.0,<8.0.0)",
     "pytest-dotenv (>=0.5.2,<0.6.0)",
     "pylint (>=4.0.4,<5.0.0)",
-    "icecream (>=2.1.8,<3.0.0)",
-    "taskipy (>=1.14.1,<2.0.0)"
+    "taskipy (>=1.14.1,<2.0.0)",
+    "ruff (>=0.14.10,<0.15.0)",
 ]
 doc = [
     "mkdocs (>=1.6.1,<2.0.0)",
@@ -44,7 +46,15 @@ doc = [
 [tool.poetry.dependencies]
 python = ">=3.13,<4.0"
 
+# ------------------------- taskipy -------------------------
+[tool.taskipy.tasks]
+lint = "pylint pycrypto/"
+ruff = "ruff format ./pycrypto && ruff check --fix ./pycrypto"
+pre_test = "docker compose up -d"
+test = "pytest -s -m 'not delete_db_data' --cov=pycrypto -v; coverage html"
+docs = "mkdocs serve -w . --watch-theme -a 'localhost:8081'"
 
+# ------------------------- pytest -------------------------
 [tool.pytest.ini_options]
 pythonpath = "."
 testpaths = "tests"
@@ -54,15 +64,61 @@ addopts = "--doctest-modules"
 markers = ["delete_db_data: Tests who can delete some info on postgres database."]
 
 
-[tool.isort]
-profile = "black"
-line_length = 79
+# ------------------------- pylint -------------------------
+[tool.pylint.master]
+ignore-paths = ["^tests/.*$"]
 
 
-[tool.taskipy.tasks]
-lint = "isort --check --diff . && pylint app/"
-pre_test = "task lint"
-test = "pytest tests/* -s -m 'not delete_db_data' --cov=app -vv"
-post_test = "coverage html"
-docs = "mkdocs serve"
+[tool.pylint.format]
+max-line-length = 180  
+
+
+[tool.pylint."messages control"]
+disable = [
+    "too-few-public-methods",       # R0903
+    "too-many-arguments",           # R0913
+    "too-many-locals",              # R0914
+    "too-many-positional-arguments",# R0917
+
+    "no-member",                    # E1101
+    "dangerous-default-value",      # W0102
+    "unnecessary-lambda",           # W0108
+    "fixme",                        # W0511: TODOs
+
+    "missing-module-docstring",   # C0114
+    "missing-class-docstring",    # C0115
+    "missing-function-docstring", # C0116
+
+    "broad-exception-raised",       # W0719
+    "broad-exception-caught",       # R0914
+
+    "logging-fstring-interpolation",# W1203
+    
+    "duplicate-code"                # R0801: Binance spot/websocket has columns on different ordering. We must repeat something like this.
+]
+
+# ------------------------- ruff -------------------------
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = [
+    "D205", # 1 blank line required between summary line and description
+    "D400", # First line should end with a period
+    "D401", # First line of docstring should be in imperative mood
+    "D415", # First line should end with a period, question mark, or exclamation point
+    "E501", # Line too long. I accept only advise by pylint. Not fix by ruff.
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D", "F401"]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
+known-first-party = ["pycrypto"]
+
 

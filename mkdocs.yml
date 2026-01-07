@@ -1,2 +1,24 @@
-site_name: Pycrypto
+site_name: pycrypto
+repo_url: https://github.com/xslyr/pycrypto
+repo_name: xslyr/pycrypto
+edit_uri: tree/main
 
+theme: 
+  name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+
+markdown_extensions:
+  - attr_list
+
+extra_css:
+  - assets/extra.css
+
+watch:
+  - pycrypto
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["."]

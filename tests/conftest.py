@@ -1,5 +1,7 @@
 import pytest
-from app.commons.utils import Singleton
+
+from pycrypto.commons.utils import Singleton
+
 
 @pytest.fixture(autouse=True)
 def reset_singletons():
