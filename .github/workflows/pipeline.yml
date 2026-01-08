@@ -2,6 +2,7 @@ name: Pipeline
 on: [push, pull_request]
 
 env:
+  GITHUB_ACTIONS: true
   BINANCE_APIKEY: ${{ secrets.BINANCE_APIKEY }}
   BINANCE_SECRETKEY: ${{ secrets.BINANCE_SECRETKEY }}
   POSTGRES_HOST: localhost
@@ -63,4 +64,4 @@ jobs:
           touch .env
 
       - name: Run tests
-        run: poetry run task test_all -m "not binance_request"
+        run: poetry run task test_all

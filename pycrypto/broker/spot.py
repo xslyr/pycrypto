@@ -1,7 +1,7 @@
 import logging
 import os
 from operator import itemgetter
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 from binance.spot import Spot
@@ -15,6 +15,20 @@ logger = logging.getLogger("app.spot")
 
 
 class BinanceSpot(metaclass=Singleton):
+    spot_cols = [
+        "open_time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "base_asset_volume",
+        "close_time",
+        "quote_asset_volume",
+        "number_of_trades",
+        "taker_buy_base_asset_volume",
+        "taker_buy_quote_asset_volume",
+    ]
+
     def __init__(self, test_mode=False):
         load_dotenv()
         self.test_mode = test_mode
@@ -45,6 +59,10 @@ class BinanceSpot(metaclass=Singleton):
         except Exception as e:
             raise e
 
+    def convert_spotklines_to_numpy(self, data: list[Tuple]) -> np.ndarray:
+        dtypes = list(itemgetter(*self.spot_cols)(BrokerUtils.ws_columns_dtype))
+        return np.fromiter((tuple(row[:-1]) for row in data), dtype=dtypes)
+
     def klines(
         self,
         ticker: str,
@@ -61,26 +79,11 @@ class BinanceSpot(metaclass=Singleton):
                 startTime=adjusted_start_time,
                 limit=limit,
             )
-            cols = [
-                "open_time",
-                "open",
-                "high",
-                "low",
-                "close",
-                "base_asset_volume",
-                "close_time",
-                "quote_asset_volume",
-                "number_of_trades",
-                "taker_buy_base_asset_volume",
-                "taker_buy_quote_asset_volume",
-            ]
-            dtypes = list(itemgetter(*cols)(BrokerUtils.ws_columns_dtype))
-
             if not as_dict:
-                data_return = np.fromiter((tuple(row[:-1]) for row in data), dtype=dtypes)
+                data_return = self.convert_spotklines_to_numpy(data)
 
             else:
-                data_return = [dict(zip(cols, row)) for row in data]
+                data_return = [dict(zip(self.spot_cols, row)) for row in data]
 
             logger.info(f"Successful klines request of {ticker} on {interval} interval.")
             return data_return
@@ -100,11 +103,11 @@ class BinanceSpot(metaclass=Singleton):
                 buy_order = self._client.new_order_test(**params)
             else:
                 buy_order = self._client.new_order(**params)
-            logger.debug(f"{buy_order=}")
+
             logger.info(f"Successful buy request for {quantity} of ticker {ticker}.")
-            return True
+            return buy_order
         except Exception as e:
-            logger.exception(f"Error on buy method. Ticker {ticker}, Qty: {quantity}, Type: {operation_type}")
+            logger.warning(f"Error on buy method. Ticker {ticker}, Qty: {quantity}, Type: {operation_type}")
             return e
 
     def sell(self, ticker: str, quantity: int, operation_type="MARKET"):
@@ -119,8 +122,9 @@ class BinanceSpot(metaclass=Singleton):
                 sell_order = self._client.new_order_test(**params)
             else:
                 sell_order = self._client.new_order(**params)
-            logger.debug(f"{sell_order=}")
+
             logger.info(f"Successful sell request for {quantity} of ticker {ticker}.")
-            return True
+            return sell_order
         except Exception as e:
+            logger.warning(f"Error on sell method. Ticker {ticker}, Qty: {quantity}, Type: {operation_type}")
             return e

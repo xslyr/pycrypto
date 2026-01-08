@@ -107,6 +107,7 @@ class Cache(metaclass=Singleton):
             logger.exception(f"Error on append_klines {stream}")
             return None
 
+    # TODO: Aqui o cache sempre espera um objeto de list[dict] ... devemos implementar a possibilidade do mesmo método trabalhar com um numpy array
     @classmethod
     def append_klines(cls, stream: Any, data: list[dict], closed_klines=True) -> bool | None:
         pipe = cls._cache.pipeline()

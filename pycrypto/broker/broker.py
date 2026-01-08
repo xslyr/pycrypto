@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+import numpy as np
+
 from pycrypto.broker.websocket import BinanceWebsocket
 from pycrypto.commons import Cache, Database
 from pycrypto.commons.utils import Singleton
@@ -106,7 +108,7 @@ class Broker(metaclass=Singleton):
         start_time: Any,
         as_dict=False,
         limit: int = 1000,
-    ):
+    ) -> np.ndarray | list[dict]:
         """Method to get past klines infos via spot request.
 
         Args:

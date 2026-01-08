@@ -4,11 +4,11 @@ import numpy as np
 import psycopg
 import pytest
 
-from pycrypto.broker import Broker
 from pycrypto.commons import Database
 from pycrypto.orchestration import Loader
+from tests.broker_wrapper import BrokerWrapper
 
-br = Broker(test_mode=True)
+br = BrokerWrapper(test_mode=True)
 base_from = datetime(2025, 1, 1)
 data = br.get_klines("BTCUSDT", "1d", base_from)
 data_len = len(data)
@@ -47,7 +47,6 @@ def test_dbclass_can_insert_klines_as_tuple():
     assert cb.insert_klines("BTCUSDT", "1d", data)
 
 
-@pytest.mark.binance_request
 @pytest.mark.delete_db_data
 def test_dbclass_can_insert_klines_as_dict():
     cb = Database()
@@ -57,7 +56,6 @@ def test_dbclass_can_insert_klines_as_dict():
     assert cb.insert_klines("BTCUSDT", "1d", data_dict)
 
 
-@pytest.mark.binance_request
 @pytest.mark.delete_db_data
 def test_dbclass_can_select_klines():
     cb = Database()

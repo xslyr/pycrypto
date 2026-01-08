@@ -59,7 +59,7 @@ pythonpath = "."
 testpaths = "tests"
 python_files = "test_*.py"
 addopts = "--doctest-modules"
-markers = ["delete_db_data: Tests who can delete some info on postgres database.", "binance_request: Tests who make binance spot requests"]
+markers = ["delete_db_data: Tests who can delete some info on postgres database."]
 
 
 # ------------------------- pylint -------------------------
