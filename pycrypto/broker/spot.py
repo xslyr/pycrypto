@@ -18,7 +18,7 @@ class BinanceSpot(metaclass=Singleton):
     def __init__(self, test_mode=False):
         load_dotenv()
         self.test_mode = test_mode
-        self._client = Spot(os.getenv("BINANCE_APIKEY"), os.getenv("BINANCE_SECRETKEY"))
+        self._client = Spot(os.environ["BINANCE_APIKEY"], os.environ["BINANCE_SECRETKEY"])
         logger.info("BinanceSpot initializated.")
 
     def wallet(self):

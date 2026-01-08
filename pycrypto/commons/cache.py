@@ -21,9 +21,9 @@ class Cache(metaclass=Singleton):
     def __init__(self):
         if Cache._cache is None:
             params = {
-                "host": os.getenv("REDIS_HOST", "localhost"),
+                "host": os.environ["REDIS_HOST"],
                 "db": 0,
-                "port": int(os.getenv("REDIS_PORT", "6379")),
+                "port": int(os.environ["REDIS_PORT"]),
                 "socket_keepalive": True,
                 "health_check_interval": 30,
                 "decode_responses": True,

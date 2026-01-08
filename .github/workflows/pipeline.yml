@@ -57,7 +57,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies
-        run: poetry install --without doc --no-interaction && mkdir logs
+        run: poetry install --without doc --no-interaction
 
       - name: Run tests
         run: poetry run task test_all

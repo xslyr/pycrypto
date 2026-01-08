@@ -63,7 +63,6 @@ def test_cache_must_get_klines():
 def test_cache_must_delete_data_in_stream():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
-    # cache_len = int(os.getenv("REDIS_KLINES_MAXLEN", 100))
     assert Cache.append_klines((ticker, interval), BTCUSDT_1H_500)
     assert Cache.delete_data_in_stream("BTCUSDT", "1h", nlast=10)
     Cache.flushdb()
@@ -80,7 +79,7 @@ def test_cache_must_check_if_key_exists():
 def test_cache_must_get_info_about_stream():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
-    # cache_len = int(os.getenv("REDIS_KLINES_LEN", 100))
+    # cache_len = int(os.environ["REDIS_KLINES_LEN", 100))
     assert Cache.append_klines((ticker, interval), BTCUSDT_1H_500)
     assert isinstance(Cache.get_info_stream("BTCUSDT", "1h"), dict)
 

@@ -30,7 +30,6 @@ dev = [
     "pytest (>=9.0.2,<10.0.0)",
     "pytest-watch (>=4.2.0,<5.0.0)",
     "pytest-cov (>=7.0.0,<8.0.0)",
-    "pytest-dotenv (>=0.5.2,<0.6.0)",
     "pylint (>=4.0.4,<5.0.0)",
     "taskipy (>=1.14.1,<2.0.0)",
     "ruff (>=0.14.10,<0.15.0)",
@@ -60,7 +59,6 @@ docs = "mkdocs serve -w . --watch-theme -a 'localhost:8081'"
 pythonpath = "."
 testpaths = "tests"
 python_files = "test_*.py"
-env_files = ".env"
 addopts = "--doctest-modules"
 markers = ["delete_db_data: Tests who can delete some info on postgres database."]
 

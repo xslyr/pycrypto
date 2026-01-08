@@ -13,11 +13,11 @@ logger = logging.getLogger("app")
 
 class Database(metaclass=Singleton):
     def __init__(self, **kwargs):
-        host = kwargs.get("host", os.getenv("POSTGRES_HOST"))
-        port = kwargs.get("port", os.getenv("POSTGRES_PORT"))
-        dbname = kwargs.get("dbname", os.getenv("POSTGRES_DB"))
-        user = kwargs.get("user", os.getenv("POSTGRES_USER"))
-        password = kwargs.get("password", os.getenv("POSTGRES_PASSWORD"))
+        host = kwargs.get("host", os.environ["POSTGRES_HOST"])
+        port = kwargs.get("port", os.environ["POSTGRES_PORT"])
+        dbname = kwargs.get("dbname", os.environ["POSTGRES_DB"])
+        user = kwargs.get("user", os.environ["POSTGRES_USER"])
+        password = kwargs.get("password", os.environ["POSTGRES_PASSWORD"])
         connection_string = f"dbname={dbname} user={user} password={password} host={host} port={port}"
         try:
             self._conn = psycopg.connect(connection_string)
