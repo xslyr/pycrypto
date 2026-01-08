@@ -2,8 +2,6 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
 
-import pandas as pd
-
 # https://python-binance.readthedocs.io/en/latest/constants.html
 
 DataSources = Enum("OriginsAvailable", ["database", "websocket"])
@@ -94,8 +92,12 @@ class Timing:
     @staticmethod
     def get_timestamp_range_list(start: datetime, end: datetime, interval: str):
         """Method to generate a timestamp range list between a datetime intervals"""
-        freq = interval if "m" not in interval else interval + "in"
-        return pd.date_range(start=start, end=end, freq=freq, tz=Timing.tz).values.astype(int) // 10**9
+
+        _start = int(start.timestamp())
+        _end = int(end.timestamp())
+        _steps = int(Timing.delta_intervals[interval].total_seconds())
+
+        return list(range(_start, _end + 1, _steps))
 
 
 class DatabaseDescription:
