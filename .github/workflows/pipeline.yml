@@ -2,9 +2,16 @@ name: Pipeline
 on: [push, pull_request]
 
 env:
-  REDIS_KLINES_MAXLEN: 1000 
   BINANCE_APIKEY: ${{ secrets.BINANCE_APIKEY }}
   BINANCE_SECRETKEY: ${{ secrets.BINANCE_SECRETKEY }}
+  POSTGRES_HOST: localhost
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: postgres
+  POSTGRES_PORT: 5432
+  REDIS_HOST: localhost
+  REDIS_PORT: 6379
+  REDIS_KLINES_MAXLEN: 1000 
 
 jobs:
   test_job:
@@ -14,11 +21,11 @@ jobs:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_HOST: localhost
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_PORT: 5432
+          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
         ports: [5432:5432]
         options: >-
           --health-cmd pg_isready
@@ -27,9 +34,6 @@ jobs:
           --health-retries 5
       redis:
         image: redis:8-alpine
-        env:
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
         ports: [6379:6379]
         options: >-
           --health-cmd "redis-cli ping"
