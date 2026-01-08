@@ -47,6 +47,7 @@ def test_dbclass_can_insert_klines_as_tuple():
     assert cb.insert_klines("BTCUSDT", "1d", data)
 
 
+@pytest.mark.binance_request
 @pytest.mark.delete_db_data
 def test_dbclass_can_insert_klines_as_dict():
     cb = Database()
@@ -56,6 +57,7 @@ def test_dbclass_can_insert_klines_as_dict():
     assert cb.insert_klines("BTCUSDT", "1d", data_dict)
 
 
+@pytest.mark.binance_request
 @pytest.mark.delete_db_data
 def test_dbclass_can_select_klines():
     cb = Database()

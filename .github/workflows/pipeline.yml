@@ -63,4 +63,4 @@ jobs:
           touch .env
 
       - name: Run tests
-        run: poetry run task test_all
+        run: poetry run task test_all -m "not binance_request"

@@ -43,6 +43,7 @@ def test_cache_must_save_get_and_flush_simple_data(key, value):
     assert Cache.get(key) == value
 
 
+@pytest.mark.binance_request
 def test_cache_must_append_a_simple_kline_and_mutiples_klines():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
@@ -50,6 +51,7 @@ def test_cache_must_append_a_simple_kline_and_mutiples_klines():
     assert Cache.append_kline((ticker, interval), BTCUSDT_1H_500[-1])
 
 
+@pytest.mark.binance_request
 def test_cache_must_get_klines():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
@@ -60,6 +62,7 @@ def test_cache_must_get_klines():
     Cache.flushdb()
 
 
+@pytest.mark.binance_request
 def test_cache_must_delete_data_in_stream():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
@@ -68,6 +71,7 @@ def test_cache_must_delete_data_in_stream():
     Cache.flushdb()
 
 
+@pytest.mark.binance_request
 def test_cache_must_check_if_key_exists():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
@@ -76,6 +80,7 @@ def test_cache_must_check_if_key_exists():
     Cache.flushdb()
 
 
+@pytest.mark.binance_request
 def test_cache_must_get_info_about_stream():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
@@ -84,6 +89,7 @@ def test_cache_must_get_info_about_stream():
     assert isinstance(Cache.get_info_stream("BTCUSDT", "1h"), dict)
 
 
+@pytest.mark.binance_request
 def test_cache_can_delete_stream():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
@@ -93,6 +99,7 @@ def test_cache_can_delete_stream():
     Cache.flushdb()
 
 
+@pytest.mark.binance_request
 def test_cache_appendklines_must_satisfy_maxlen_criteria():
     Cache.flushdb()
     ticker, interval = "BTCUSDT", "1h"
