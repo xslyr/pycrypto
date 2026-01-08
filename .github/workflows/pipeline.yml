@@ -14,9 +14,11 @@ jobs:
       postgres:
         image: postgres:18
         env:
+          POSTGRES_HOST: localhost
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
+          POSTGRES_PORT: 5432
         ports: [5432:5432]
         options: >-
           --health-cmd pg_isready
@@ -51,7 +53,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies
-        run: poetry install --without doc --no-interaction
+        run: poetry install --without doc --no-interaction && mkdir logs
 
       - name: Run tests
         run: poetry run task test_all

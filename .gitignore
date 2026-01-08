@@ -181,7 +181,6 @@ cython_debug/
 archived
 data
 logs/*
-*.ipynb
-.ipynb_checkpoints
+
 
 
