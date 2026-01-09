@@ -62,4 +62,8 @@ jobs:
           touch .env
 
       - name: Run tests
+        env:
+          # CHANGE ENV HOSTS TO RUN WITH ACT ON LOCAL ENVIRONMENT
+          POSTGRES_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'postgres'}}
+          REDIS_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'redis'}}
         run: poetry run task test_all -m "not binance_websocket"
