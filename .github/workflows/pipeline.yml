@@ -3,16 +3,16 @@ on: [push, pull_request]
 
 env:
   GITHUB_ACTIONS: true
+  TZ: America/Sao_Paulo
   BINANCE_APIKEY: ${{ secrets.BINANCE_APIKEY }}
   BINANCE_SECRETKEY: ${{ secrets.BINANCE_SECRETKEY }}
-  POSTGRES_HOST: localhost
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
-  POSTGRES_DB: postgres
+  POSTGRES_HOST: postgres
+  POSTGRES_USER: admin
+  POSTGRES_PASSWORD: minhasenha123
+  POSTGRES_DB: pycrypto
   POSTGRES_PORT: 5432
-  REDIS_HOST: localhost
+  REDIS_HOST: redis
   REDIS_PORT: 6379
-  REDIS_KLINES_MAXLEN: 1000 
 
 jobs:
   test_job:
@@ -22,11 +22,9 @@ jobs:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
         ports: [5432:5432]
         options: >-
           --health-cmd pg_isready
@@ -64,4 +62,4 @@ jobs:
           touch .env
 
       - name: Run tests
-        run: poetry run task test_all
+        run: poetry run task test_all -m "not binance_websocket"

@@ -1,6 +1,8 @@
-from datetime import datetime, timedelta, timezone
+import os
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
+from zoneinfo import ZoneInfo
 
 # https://python-binance.readthedocs.io/en/latest/constants.html
 
@@ -42,7 +44,7 @@ class Timing:
         "1d": timedelta(days=1),
     }
 
-    tz = timezone(timedelta(hours=0))
+    tz = ZoneInfo(os.environ["TZ"])
 
     @staticmethod
     def convert_any_to_datetime(_datetime: Any):
@@ -53,16 +55,16 @@ class Timing:
                     raise Exception(
                         "On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param."
                     )
-                adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S").astimezone(Timing.tz)
+                adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S")
             case int() | float():
                 if len(str(int(_datetime))) > 10:
                     adjusted_start_time = datetime.fromtimestamp(_datetime / 1000, tz=Timing.tz)
                 else:
                     adjusted_start_time = datetime.fromtimestamp(_datetime, tz=Timing.tz)
             case datetime():
-                adjusted_start_time = _datetime.astimezone(Timing.tz)
+                adjusted_start_time = _datetime
 
-        return adjusted_start_time
+        return adjusted_start_time.replace(tzinfo=None)
 
     @staticmethod
     def convert_any_to_timestamp(_datetime: Any):
@@ -73,19 +75,19 @@ class Timing:
                     raise Exception(
                         "On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param."
                     )
-                adjusted_start_time = int(
-                    datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S").astimezone(Timing.tz).timestamp() * 1000
-                )
+                adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S").replace(tzinfo=Timing.tz)
+                adjusted_start_time = int(adjusted_start_time.timestamp() * 1000)
 
             case int() | float():
                 if len(str(_datetime)) < 13:
                     adjusted_start_time = int(str(int(_datetime)).ljust(13, "0"))
 
             case datetime():
-                adjusted_start_time = int(_datetime.astimezone(Timing.tz).timestamp() * 1000)
+                dt = _datetime.replace(tzinfo=Timing.tz) if _datetime.tzinfo is None else _datetime
+                adjusted_start_time = int(dt.timestamp() * 1000)
 
             case _:
-                adjusted_start_time = _datetime.astimezone(Timing.tz)
+                raise Exception("Unknown timestamp format.")
 
         return adjusted_start_time
 

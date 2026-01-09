@@ -67,7 +67,7 @@ class Loader:
 
         if from_datetime != "":
             start = Timing.convert_any_to_datetime(from_datetime)
-            end = datetime.combine(datetime.now().date(), time(0, 0)).astimezone(Timing.tz)
+            end = datetime.combine(datetime.now().date(), time(0, 0))
         else:
             start = Timing.convert_any_to_datetime(between_datetimes[0])
             end = Timing.convert_any_to_datetime(between_datetimes[1])

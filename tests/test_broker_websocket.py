@@ -1,5 +1,6 @@
 import time
 
+import pytest
 from binance.websocket.websocket_client import BinanceWebsocketClient
 
 from pycrypto.broker.websocket import BinanceWebsocket
@@ -25,6 +26,7 @@ def test_websocket_must_create_correct_string_connections():
     assert "btcusdt@kline_1d" in ws.subscribe_list
 
 
+@pytest.mark.binance_websocket
 def test_websocket_start_must_append_data_on_cache():
     Cache.flushdb()
     params = {"ticker": "BTCUSDT", "intervals": ["1s", "1m", "1h"]}
