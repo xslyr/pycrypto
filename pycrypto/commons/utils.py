@@ -44,7 +44,7 @@ class Timing:
         "1d": timedelta(days=1),
     }
 
-    tz = ZoneInfo(os.environ["TZ"])
+    tz = ZoneInfo(os.getenv("TZ", "UTC"))
 
     @staticmethod
     def convert_any_to_datetime(_datetime: Any):
