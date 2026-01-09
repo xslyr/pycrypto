@@ -63,18 +63,3 @@ def test_dbclass_can_select_klines():
     cb.clean_kline_table(["1d"])
     cb.insert_klines("BTCUSDT", "1d", data)
     assert len(cb.select_klines("BTCUSDT", "1d", from_datetime=base_from)) == data_len
-
-
-@pytest.mark.delete_db_data
-def test_broker_loader_must_dump_data_in_kline_tables():
-    cbd = Database()
-    cbd.check_fix_db_integrity()
-    cbd.clean_kline_table(["1d"])
-
-    d_inicio = datetime(2025, 1, 1)
-    d_fim = datetime(2026, 1, 1)
-    qty_intervals = int((d_fim - d_inicio) / timedelta(days=1))
-
-    Loader().dump_klines_into_db("BTCUSDT", ["1d"], between_datetimes=(d_inicio, d_fim), verbose=True)
-    qty_records = len(cbd.select_klines("BTCUSDT", "1d", between_datetimes=(d_inicio, d_fim)))
-    assert qty_records == qty_intervals

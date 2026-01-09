@@ -185,11 +185,11 @@ class Loader:
                     if full_loops > 60:
                         ts.sleep(1)
 
-                data = self.br.get_klines(ticker, i, date_aux)
+                data = self.br.get_klines(ticker, i, date_aux, as_dict=True)
                 self.db.insert_klines(ticker, i, data)
                 if verbose:
-                    s = datetime.fromtimestamp(data[0][0] / 1000)
-                    e = datetime.fromtimestamp(data[-1][6] / 1000)
+                    s = datetime.fromtimestamp(data[0]["open_time"] / 1000)
+                    e = datetime.fromtimestamp(data[-1]["close_time"] / 1000)
                     logger.info(f"\t {final_round} records saved between {s} and {e}")
 
             return True
