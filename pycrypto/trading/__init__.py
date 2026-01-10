@@ -10,32 +10,51 @@ from pycrypto.commons.utils import BrokerUtils, DataSources
 class ItemRule(np.ndarray):
     """Class is used as parent of Strategies combinations and implements numpy operations between our prepared numpy array"""
 
-    def __new__(cls, arr):
-        return np.asarray(arr).view(cls)
+    def __new__(cls, arr, field=None):
+        obj = np.asarray(arr).view(cls)
+        obj._active_field = field or "close"  # Default field
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None:
+            return
+        self._active_field = getattr(obj, "_active_field", "close")
+
+    def __getitem__(self, item):
+        res = super().__getitem__(item)
+        if isinstance(item, str):
+            res = res.view(type(self))
+            res._active_field = item
+        return res
+
+    def _get_cmp_data(self):
+        if self.dtype.names is not None:
+            return self[self._active_field]
+        return self
 
     def __bool__(self):
-        return bool(self[-1])
+        return bool(self[-1][self._active_field])
 
     def __get_value(self, other):
         return other[-1] if isinstance(other, np.ndarray) else other
 
     def __lt__(self, other):
-        return self[-1] < self.__get_value(other)
+        return self[-1][self._active_field] < self.__get_value(other)
 
     def __le__(self, other):
-        return self[-1] <= self.__get_value(other)
+        return self[-1][self._active_field] <= self.__get_value(other)
 
     def __gt__(self, other):
-        return self[-1] > self.__get_value(other)
+        return self[-1][self._active_field] > self.__get_value(other)
 
     def __ge__(self, other):
-        return self[-1] >= self.__get_value(other)
+        return self[-1][self._active_field] >= self.__get_value(other)
 
     def __eq__(self, other):
-        return self[-1] == self.__get_value(other)
+        return self[-1][self._active_field] == self.__get_value(other)
 
     def __ne__(self, other):
-        return self[-1] != self.__get_value(other)
+        return self[-1][self._active_field] != self.__get_value(other)
 
 
 # TODO: Create test to this test
