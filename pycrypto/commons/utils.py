@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 # https://python-binance.readthedocs.io/en/latest/constants.html
 
-DataSources = Enum("OriginsAvailable", ["database", "websocket"])
+DataSources = Enum("OriginsAvailable", ["database", "websocket", "mock"])
 
 
 class Timing:
