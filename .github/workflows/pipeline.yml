@@ -37,7 +37,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies (dev only)
-        run: poetry install --only dev --no-interaction
+        run: poetry install --without doc --no-interaction
 
       - name: Run Ruff
         run: poetry run task ruff
