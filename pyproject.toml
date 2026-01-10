@@ -81,6 +81,8 @@ disable = [
     "too-many-locals",              # R0914
     "too-many-positional-arguments",# R0917
 
+    "attribute-defined-outside-init",#W021 ItemRule implements over np.array and must do it.
+
     "no-member",                    # E1101
     "dangerous-default-value",      # W0102
     "unnecessary-lambda",           # W0108
