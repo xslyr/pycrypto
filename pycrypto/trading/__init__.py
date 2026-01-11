@@ -1,6 +1,7 @@
 """Package trading aggregate objects who will define and create strategy rules and analyst who will be used to decide and call buy/sell on broker"""
 
 from operator import itemgetter
+from typing import Self, cast
 
 import numpy as np
 
@@ -25,36 +26,45 @@ class ItemRule(np.ndarray):
         if isinstance(item, str):
             res = res.view(type(self))
             res._active_field = item
-        return res
+        return cast(ItemRule, res)
 
     def _get_cmp_data(self):
         if self.dtype.names is not None:
-            return self[self._active_field]
+            # return self.active_field
+            return np.ndarray.__getitem__(self, self._active_field)[-1]
         return self
 
+    @property
+    def active_field(self):
+        return cast(ItemRule, self[self._active_field])
+
+    @property
+    def last(self):
+        return self[-1:]
+
     def __bool__(self):
-        return bool(self[-1][self._active_field])
+        return bool(self.active_field.last.item())
 
     def __get_value(self, other):
-        return other[-1] if isinstance(other, np.ndarray) else other
+        return other.active_field.last.item() if isinstance(other, ItemRule) else other
 
     def __lt__(self, other):
-        return self[-1][self._active_field] < self.__get_value(other)
+        return self.active_field.last.item() < self.__get_value(other)
 
     def __le__(self, other):
-        return self[-1][self._active_field] <= self.__get_value(other)
+        return self.active_field.last.item() <= self.__get_value(other)
 
     def __gt__(self, other):
-        return self[-1][self._active_field] > self.__get_value(other)
+        return self.active_field.last.item() > self.__get_value(other)
 
     def __ge__(self, other):
-        return self[-1][self._active_field] >= self.__get_value(other)
+        return self.active_field.last.item() >= self.__get_value(other)
 
     def __eq__(self, other):
-        return self[-1][self._active_field] == self.__get_value(other)
+        return self.active_field.last.item() == self.__get_value(other)
 
     def __ne__(self, other):
-        return self[-1][self._active_field] != self.__get_value(other)
+        return self.active_field.last.item() != self.__get_value(other)
 
 
 # TODO: Create test to this test
