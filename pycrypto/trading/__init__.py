@@ -86,7 +86,6 @@ class ItemRule(np.ndarray):
         return np.asarray(self.active_field)[-1] != self.__get_value(other)
 
 
-# TODO: Create test to this test
 def convert_data_to_numpy(data: list, origin: DataSources, **kwargs) -> np.array:
     """Method to prepare and convert crude data to numpy array"""
 
@@ -107,9 +106,9 @@ def convert_data_to_numpy(data: list, origin: DataSources, **kwargs) -> np.array
             result = np.array(arr, dtype=dtypes)
 
         case DataSources.mock:
-            cols = data[0].keys()
+            cols = kwargs.get("cols", data[0].keys())
             dtypes = list(itemgetter(*cols)(BrokerUtils.ws_columns_dtype))
-            arr = [tuple(row.values()) for row in data]
+            arr = [tuple(itemgetter(*cols)(row)) for row in data]
             result = np.array(arr, dtype=dtypes)
 
     return result
