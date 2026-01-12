@@ -1,7 +1,7 @@
 """Module responsable to implements Parent child of rules criteria for strategies and Aggregate technical analysis functions."""
 
 from enum import Enum
-from typing import Tuple
+from typing import Any, Tuple, overload
 
 import numpy as np
 import talib
@@ -43,28 +43,23 @@ SMATarget = Enum(
 class Overlap:
     """Wrapper class to agregate some technical analysis functions"""
 
+    @overload
     @staticmethod
-    def sma(data: np.array, length: int, target: SMATarget = SMATarget.close) -> ItemRule:
-        """SMA (Simple Moving Average)
-        Calcula a média dos preços de fechamento dentro de um período.
+    def sma(data: ItemRule, length: int = 14): ...
 
-        Args:
-            data: array of klines data
-            length: number of periods to calc
-            target: base function used on calc
+    @overload
+    @staticmethod
+    def sma(data: np.ndarray, length: int = 14, target: str = "close"): ...
 
-        Return:
-            SMA:  Média dos valores dos último n períodos.
+    @staticmethod
+    def sma(data: Any, **kwargs) -> Any:  # type: ignore
+        length = kwargs.get("length", 14)
+        if isinstance(data, ItemRule):
+            x = talib.SMA(np.array(data), length)[-1]
+            return x
 
-        Interpretações:
-            Quanto mais próximo o valor atual da média de n períodos, , menor a volatilidade sobre o aspecto de n períodos;
-            A o cruzamento/diferença entre médias móveis de menor e maior período podem indicar momento de reversão de tendência.
-
-        Uso:
-            Útil para qualquer percepção relativa de preços em um determinado período.
-
-        """
-        return ItemRule(talib.SMA(data[target.name], length))
+        target = kwargs.get("target", "close")
+        return talib.SMA(data[target], length)
 
     @staticmethod
     def bollinger(
