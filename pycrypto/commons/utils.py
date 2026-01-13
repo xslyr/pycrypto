@@ -184,7 +184,7 @@ class BrokerUtils:
         "ignore": "B",
     }
 
-    ws_columns_dtype = {
+    columns_dtype = {
         "open_time": ("open_time", "i8"),
         "close_time": ("close_time", "i8"),
         "ticker": ("ticker", "S10"),

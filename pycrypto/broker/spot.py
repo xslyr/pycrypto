@@ -60,7 +60,7 @@ class BinanceSpot(metaclass=Singleton):
             raise e
 
     def convert_spotklines_to_numpy(self, data: list[Tuple]) -> np.ndarray:
-        dtypes = list(itemgetter(*self.spot_cols)(BrokerUtils.ws_columns_dtype))
+        dtypes = list(itemgetter(*self.spot_cols)(BrokerUtils.columns_dtype))
         return np.fromiter((tuple(row[:-1]) for row in data), dtype=dtypes)
 
     def klines(
