@@ -96,6 +96,7 @@ disable = [
     "broad-exception-caught",       # R0914
 
     "logging-fstring-interpolation",# W1203
+    "invalid-overridden-method",    # W0236 
     
     "duplicate-code"                # R0801: Binance spot/websocket has columns on different ordering. We must repeat something like this.
 ]
