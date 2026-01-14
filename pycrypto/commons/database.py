@@ -119,13 +119,15 @@ class Database(metaclass=Singleton):
         columns = sql.SQL(", ").join(map(sql.Identifier, only_columns))
         query, params = "", ""
 
-        if from_datetime == "" and between_datetimes == ("", ""):
-            raise Exception("Is necessary one of from_datetime or between_datetime param.")
-
         if from_datetime != "" and between_datetimes != ("", ""):
             raise Exception("Is necessary ONLY one of from_datetime or between_datetime param.")
 
         table = f"klines_{interval}"
+
+        if from_datetime == "" and between_datetimes == ("", ""):
+            query = sql.SQL("SELECT {} FROM {} WHERE ticker=%s").format(columns, sql.Identifier(table))
+            params = (ticker,)
+
         if from_datetime != "":
             query = sql.SQL("SELECT {} FROM {} WHERE ticker=%s AND open_time >= %s ").format(
                 columns, sql.Identifier(table)

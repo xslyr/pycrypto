@@ -1,11 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from operator import itemgetter
+from typing import List
 
 import numpy as np
 import psycopg
 import pytest
 
 from pycrypto.commons import Database
-from pycrypto.orchestration import Loader
+from pycrypto.commons.utils import BrokerUtils, DataSources
+from pycrypto.trading import convert_data_to_numpy
 from tests.broker_wrapper import BrokerWrapper
 
 br = BrokerWrapper(test_mode=True)
@@ -63,3 +66,16 @@ def test_dbclass_can_select_klines():
     cb.clean_kline_table(["1d"])
     cb.insert_klines("BTCUSDT", "1d", data)
     assert len(cb.select_klines("BTCUSDT", "1d", from_datetime=base_from)) == data_len
+
+
+@pytest.mark.delete_db_data
+def test_dbclass_can_select_klines_without_datetime_params():
+    cb = Database()
+    cb.check_fix_db_integrity()
+    cb.clean_kline_table(["1d"])
+    cb.insert_klines("BTCUSDT", "1d", data)
+    klines = cb.select_klines("BTCUSDT", "1d")
+    data_arr = convert_data_to_numpy(data, DataSources.mock, cols=BrokerUtils.kline_columns[2:-1])
+    select_arr = convert_data_to_numpy(klines, DataSources.database, cols=BrokerUtils.kline_columns[2:-1])
+    assert isinstance(klines, List)
+    assert all(select_arr == data_arr)
