@@ -85,7 +85,7 @@ class BinanceSpot(metaclass=Singleton):
             else:
                 data_return = [dict(zip(self.spot_cols, row)) for row in data]
 
-            logger.info(f"Successful klines request of {ticker} on {interval} interval.")
+            logger.debug(f"Successful klines request of {ticker} on {interval} interval.")
             return data_return
         except Exception:
             logger.warning(f"Error on spot.klines. Ticker: {ticker}, Interval:{interval}")
