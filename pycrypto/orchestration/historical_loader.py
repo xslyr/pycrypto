@@ -12,9 +12,6 @@ from pycrypto.broker import Broker
 from pycrypto.commons.database import Database
 from pycrypto.commons.utils import Timing
 
-# TODO: switch logger by tqdm to show process steps
-
-
 logger = logging.getLogger("app")
 
 

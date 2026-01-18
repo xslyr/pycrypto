@@ -12,7 +12,7 @@ DataSources = Enum("OriginsAvailable", ["database", "websocket", "mock"])
 class Timing:
     """Class responsable for aggregate timing context constants and common functions correlated with it."""
 
-    intervals_available = [
+    klines_intervals_available = [
         "1s",
         "1m",
         "3m",
@@ -27,6 +27,7 @@ class Timing:
         "12h",
         "1d",
     ]
+    widemonitor_intervals_available = ["1h", "4h", "1d"]
 
     delta_intervals = {
         "1s": timedelta(seconds=1),
@@ -81,6 +82,8 @@ class Timing:
             case int() | float():
                 if len(str(_datetime)) < 13:
                     adjusted_start_time = int(str(int(_datetime)).ljust(13, "0"))
+                else:
+                    adjusted_start_time = _datetime
 
             case datetime():
                 dt = _datetime.replace(tzinfo=Timing.tz) if _datetime.tzinfo is None else _datetime
@@ -128,7 +131,7 @@ class DatabaseDescription:
             "primary_key": "primary key (ticker, open_time)",
         },
     }
-    qty_tables = len(db_structure.keys()) + len(Timing.intervals_available) - 1
+    qty_tables = len(db_structure.keys()) + len(Timing.klines_intervals_available) - 1
 
 
 class Singleton(type):
@@ -218,4 +221,56 @@ class BrokerUtils:
         "8h": 3,
         "12h": 2,
         "1d": 1,
+    }
+
+    widemonitor_columns = {
+        "e": "etype",  # Event type (tipo de evento).
+        "E": "timestamp",  # Event time (tempo do evento) em milissegundos desde a Época Unix.
+        "s": "ticker",  # Símbolo do par de negociação.
+        "p": "var_price",  # Variação de preço (price change) no período.
+        "P": "pct_price",  # Variação percentual do preço (price change percentage) no período.
+        "w": "vwap",  # Preço médio ponderado no período.
+        "x": "last_price",  # Preço do último trade realizado antes do fechamento do ticker.
+        "c": "close",  # Preço de fechamento no período.
+        "Q": "last_qty",  # Quantidade do último trade realizado.
+        "b": "best_bid_price",  # O melhor preço de compra no topo do livro (Bid).
+        "B": "best_bid_qty",  # A quantidade disponível no melhor preço de compra.
+        "a": "best_ask_price",  # O melhor preço de venda no topo do livro (Ask).
+        "A": "best_ask_qty",  # A quantidade disponível no melhor preço de venda.
+        "o": "open",  # Preço de abertura no período.
+        "h": "high",  # Preço mais alto no período.
+        "l": "low",  # Preço mais baixo no período.
+        "v": "base_asset_volume",  # Volume total negociado no período.
+        "q": "quote_asset_volume",  # Volume total em dólares negociado no período.
+        "O": "open_time",  # Timestamp da abertura no período apresentado.
+        "C": "close_time",  # Timestamp de fechamento no período apresentado.
+        "F": "first_trade",  # Primeiro trade (primeiro negócio) no período.
+        "L": "last_trade",  # Último trade (último negócio) no período.
+        "n": "number_of_trades",  # Número total de trades no período.
+    }
+
+    widemonitor_columns_dtype = {
+        "etype": ("etype", "U8"),
+        "timestamp": ("timestamp", "i8"),
+        "ticker": ("ticker", "U10"),
+        "pct_price": ("pct_price", "f8"),
+        "var_price": ("var_price", "f8"),
+        "vwap": ("vwap", "f8"),
+        "last_price": ("last_price", "f8"),
+        "close": ("close", "f8"),
+        "last_qty": ("last_qty", "f8"),
+        "best_bid_price": ("best_bid_price", "f8"),
+        "best_bid_qty": ("best_bid_qty", "f8"),
+        "best_ask_price": ("best_ask_price", "f8"),
+        "best_ask_qty": ("best_ask_qty", "f8"),
+        "open": ("open", "f8"),
+        "high": ("high", "f8"),
+        "low": ("low", "f8"),
+        "base_asset_volume": ("base_asset_volume", "f8"),
+        "quote_asset_volume": ("quote_asset_volume", "f8"),
+        "open_time": ("open_time", "f8"),
+        "close_time": ("close_time", "f8"),
+        "first_trade": ("first_trade", "i8"),
+        "last_trade": ("last_trade", "i8"),
+        "number_of_trades": ("number_of_trades", "i8"),
     }
