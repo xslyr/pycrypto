@@ -22,7 +22,9 @@ class BrokerWrapper(Broker):
 
     def get_klines(self, ticker: str, interval: str, start_time: Any, **kwargs) -> np.ndarray | list[dict]:
         mock_required = kwargs.get("mock_required", True)
+
         as_dict = kwargs.get("as_dict", True)
+
         filename = f"{ticker}_{interval}_{start_time}"
         filename += "_dict.json" if as_dict else "_as_array.json"
         mock_file = self.mock_path / filename
@@ -36,7 +38,7 @@ class BrokerWrapper(Broker):
                     data = json.load(f)
                     return super().spot.convert_spotklines_to_numpy(data) if not as_dict else data
 
-            data = super().get_klines(ticker, interval, start_time, as_dict=as_dict, **kwargs)
+            data = super().get_klines(ticker, interval, start_time, **kwargs)
             self.mock_path.mkdir(parents=True, exist_ok=True)
 
             with open(mock_file, "w") as f:

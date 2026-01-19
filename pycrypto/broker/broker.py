@@ -106,7 +106,7 @@ class Broker(metaclass=Singleton):
         ticker: str,
         interval: str,
         start_time: Any,
-        as_dict=False,
+        as_dict=True,
         limit: int = 1000,
     ) -> np.ndarray | list[dict]:
         """Method to get past klines infos via spot request.

@@ -6,13 +6,11 @@ from datetime import datetime, time
 from typing import Any, Tuple
 
 import numpy as np
+from tqdm import tqdm
 
 from pycrypto.broker import Broker
 from pycrypto.commons.database import Database
 from pycrypto.commons.utils import Timing
-
-# TODO: switch logger by tqdm to show process steps
-
 
 logger = logging.getLogger("app")
 
@@ -163,34 +161,28 @@ class Loader:
             start, end = self.__common_datetime_conversions(intervals, from_datetime, between_datetimes, verbose)
 
             for i in intervals[::-1]:
-                if verbose:
-                    logger.info(f".. Dumping interval {i}")
-
                 delta = Timing.delta_intervals[i]
                 intervals_between_datetimes = int((end - start) / delta)
                 full_loops, final_round = divmod(intervals_between_datetimes, 1000)
                 if verbose:
-                    logger.info(f"\tRecords in current interval: {intervals_between_datetimes}")
+                    process = tqdm(total=full_loops + 1, desc=f"Loading {i} interval ...", unit="unit")
 
                 date_aux = start
                 for _ in range(full_loops):
                     data = self.br.get_klines(ticker, i, date_aux)
                     self.db.insert_klines(ticker, i, data)
-                    if verbose:
-                        s = datetime.fromtimestamp(data[0][0] / 1000)
-                        e = datetime.fromtimestamp(data[-1][6] / 1000)
-                        logger.info(f"\t 1000 records saved between {s} and {e}")
 
                     date_aux += 1000 * delta
                     if full_loops > 60:
                         ts.sleep(1)
 
-                data = self.br.get_klines(ticker, i, date_aux, as_dict=True)
+                    if verbose:
+                        process.update(1)
+
+                data = self.br.get_klines(ticker, i, date_aux, as_dict=True, limit=final_round)
                 self.db.insert_klines(ticker, i, data)
                 if verbose:
-                    s = datetime.fromtimestamp(data[0]["open_time"] / 1000)
-                    e = datetime.fromtimestamp(data[-1]["close_time"] / 1000)
-                    logger.info(f"\t {final_round} records saved between {s} and {e}")
+                    process.update(1)
 
             return True
 

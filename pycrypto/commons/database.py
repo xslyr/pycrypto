@@ -53,7 +53,7 @@ class Database(metaclass=Singleton):
                     )
                     primary_key = table_structure["primary_key"]
                     if table == "klines_tables":
-                        for kline in Timing.intervals_available:
+                        for kline in Timing.klines_intervals_available:
                             table_name = f"klines_{kline}"
                             create_command = sql.SQL(sql_base_create).format(
                                 sql.Identifier(table_name),
