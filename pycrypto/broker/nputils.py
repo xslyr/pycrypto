@@ -20,8 +20,7 @@ def aggregate_structured(arr, group_key, agg_dict):
     uniques = np.unique(arr[group_key])
 
     res_dtype = [(group_key, arr.dtype[group_key])] + [(col, arr.dtype[col]) for col in agg_dict.keys()]
-
-    result = np.empty(uniques.size, dtype=res_dtype)  # type: ignore
+    result = np.empty(uniques.size, dtype=res_dtype)
 
     for i, val in enumerate(uniques):
         mask = arr[group_key] == val
@@ -35,6 +34,5 @@ def aggregate_structured(arr, group_key, agg_dict):
 
 
 def ticker_contains(data: np.ndarray, ticker_filter: str = "USDT"):
-    _filter = b"%s" % ticker_filter.encode("utf-8")
-    mask = np.char.find(data["ticker"], _filter)
+    mask = np.char.find(data["ticker"], ticker_filter)
     return data[mask] if mask != -1 else np.array([], dtype=data.dtype)
