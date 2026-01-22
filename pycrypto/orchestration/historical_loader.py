@@ -107,26 +107,15 @@ class Loader:
         remaining_timestamps = {}
         for i in intervals[::-1]:
             timestamp_range = Timing.get_timestamp_range_list(start, end, i)
-            if i == "1d":
-                timestamps_saved = [
-                    int(i[0] / 1000) - 75600
-                    for i in self.db.select_klines(
-                        ticker,
-                        i,
-                        between_datetimes=(start, end),
-                        only_columns=["open_time"],
-                    )
-                ]
-            else:
-                timestamps_saved = [
-                    int(i[0] / 1000)
-                    for i in self.db.select_klines(
-                        ticker,
-                        i,
-                        between_datetimes=(start, end),
-                        only_columns=["open_time"],
-                    )
-                ]
+            timestamps_saved = [
+                int(i[0] / 1000)
+                for i in self.db.select_klines(
+                    ticker,
+                    i,
+                    between_datetimes=(start, end),
+                    only_columns=["open_time"],
+                )
+            ]
 
             remaining_timestamps[i] = np.setdiff1d(timestamp_range, timestamps_saved, assume_unique=True).tolist()
 
