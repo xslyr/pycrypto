@@ -4,6 +4,7 @@ from typing import Any
 import numpy as np
 
 from pycrypto.broker.websocket import BinanceWebsocket
+from pycrypto.broker.widemonitor import BinanceMonitor
 from pycrypto.commons import Cache, Database
 from pycrypto.commons.utils import Singleton
 
@@ -74,15 +75,21 @@ class Broker(metaclass=Singleton):
         Args:
             ticker: pair-coin who will be monitored.
             intervals: list of intervals who will be monitored.
-
-        Returns:
-            The return of webscoket info will be directly save on redis cache with stream name like a:
+            !!! The websocket return data saves directly on redis cache with stream name like a:
             - {ticker}@klines_{interval}:closed
             - {ticker}@klines_{interval}:opened
 
+        Returns:
+            Boolean indicating the success or failure of the execution.
+
         """
-        self.websocket = BinanceWebsocket(ticker, intervals)
-        self.websocket.start_websocket()
+        try:
+            self.websocket = BinanceWebsocket(ticker, intervals)
+            self.websocket.start_websocket()
+            return True
+        except Exception:
+            logger.exception("Error on websocket initialization.")
+            return False
 
     def stop_websocket(self):
         """Method to stop websocket info receiving.
@@ -151,3 +158,36 @@ class Broker(metaclass=Singleton):
 
         """
         return self.spot.sell(ticker, quantity, operation_type)
+
+    def start_widemonitor(self):
+        """Method to start widemonitor.
+
+        Args:
+            None.
+
+        Returns:
+            Boolean indicating the success or failure of the execution.
+        """
+        try:
+            self.widemonitor = BinanceMonitor()
+            self.widemonitor.start_websocket()
+            return True
+        except Exception:
+            logger.exception("Error on initialization o widemonitor.")
+            return False
+
+    def stop_widemonitor(self):
+        """Method to stop widemonitor.
+
+        Args:
+            None
+
+        Returns:
+            Boolean indicating the success or failure of the execution.
+        """
+        try:
+            self.widemonitor.close_websocket()
+            return True
+        except Exception:
+            logger.exception("Error on stoping widemonitor.")
+            return False

@@ -15,7 +15,6 @@ class BinanceMonitor(metaclass=Singleton):
     """
     All Market Tickers Streams - https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams/All-Market-Tickers-Streams
     wss://stream.binance.com:9443/ws/!ticker@arr
-
     """
 
     _stream: BinanceWebsocketClient = None  # type:ignore
@@ -25,11 +24,15 @@ class BinanceMonitor(metaclass=Singleton):
         self.__subscription = "!ticker@arr"
         self.__monitor_cols = list(BrokerUtils.widemonitor_columns)[1:]
         self.__monitor_dtypes = list(BrokerUtils.widemonitor_columns_dtype.values())[1:]
-        self.monitor: np.ndarray = np.empty(0, dtype=self.__monitor_dtypes)
+        self.__monitor: np.ndarray = np.empty(0, dtype=self.__monitor_dtypes)
 
     @property
     def stream(self):
         return self._stream
+
+    @property
+    def monitor(self):
+        return self.__monitor
 
     def on_single_message(self, _, message):
         try:
@@ -37,10 +40,9 @@ class BinanceMonitor(metaclass=Singleton):
             msg = json.loads(message)
             if isinstance(msg, list):
                 arr = np.fromiter((itemgetter(*self.__monitor_cols)(row) for row in msg), dtype=self.__monitor_dtypes)
-                self.monitor = upsert_monitor_arr(self.monitor, arr)
+                self.__monitor = upsert_monitor_arr(self.__monitor, arr)
         except Exception as e:
             logger.info(e)
-            print(f"{msg}\n\n")
 
     def pong(self, _, message):
         self._stream.subscribe(self.__subscription, id=message.decode("utf-8"))
