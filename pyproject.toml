@@ -102,7 +102,7 @@ disable = [
 
     "logging-fstring-interpolation",# W1203
     "invalid-overridden-method",    # W0236 
-    
+    "consider-using-f-string",      # C0209
     "duplicate-code"                # R0801: Binance spot/websocket has columns on different ordering. We must repeat something like this.
 ]
 

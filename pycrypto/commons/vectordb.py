@@ -12,7 +12,7 @@ db_params = tuple(
     map(os.getenv, ["PGVECTOR_USER", "PGVECTOR_PASSWORD", "PGVECTOR_HOST", "PGVECTOR_PORT", "PGVECTOR_DB"])
 )
 string_connection = "postgres://{}:{}@{}:{}/{}".format(*db_params)
-conn = psycopg.connect(string_connection, autocommit=True)
+connetction = psycopg.connect(string_connection, autocommit=True)
 
 
 def configure(conn):
