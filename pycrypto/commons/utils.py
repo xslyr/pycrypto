@@ -252,7 +252,7 @@ class BrokerUtils:
     widemonitor_columns_dtype = {
         "etype": ("etype", "U8"),
         "timestamp": ("timestamp", "i8"),
-        "ticker": ("ticker", "U10"),
+        "ticker": ("ticker", "U15"),
         "pct_price": ("pct_price", "f8"),
         "var_price": ("var_price", "f8"),
         "vwap": ("vwap", "f8"),
