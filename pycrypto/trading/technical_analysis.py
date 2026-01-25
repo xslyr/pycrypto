@@ -59,7 +59,7 @@ class Overlap:
             Usar para setups de volatilidade e reversão à média.
 
         """
-        return talib.BBANDS(data[target], timeperiod=length, nbdevup=devup, nbdevdn=devdown, matype=matype)
+        return talib.BBANDS(data[target], length, devup, devdown, matype)
 
 
 class Momentum:
@@ -129,16 +129,7 @@ class Momentum:
             Usar e em mercados laterais ou para refinar o timing de entrada em correções de tendência.
 
         """
-        return talib.STOCH(
-            data["high"],
-            data["low"],
-            data["close"],
-            fastk_period=fastk,
-            slowk_period=slowk,
-            slowd_period=slowd,
-            slowk_matype=slowk_type,
-            slowd_matype=slowd_type,
-        )
+        return talib.STOCH(data["high"], data["low"], data["close"], fastk, slowk, slowk_type, slowd, slowd_type)
 
     @staticmethod
     def adx(data: np.array, length: int = 14) -> np.ndarray:
