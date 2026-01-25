@@ -63,6 +63,15 @@ def test_itemrule_must_be_comparable_one_each_other():
     assert arr_close != arr_open
 
 
+def test_itemrule_binded_must_compared_one_each_other_by_function_result():
+    arr_sma = ItemRule(data, Overlap.sma)
+    sma_result = Overlap.sma(data)
+    assert arr_sma == sma_result[-1].item()
+    arr_bolinger = ItemRule(data, Overlap.bollinger, target_operator=1)
+    bollinger_result = Overlap.bollinger(data)
+    assert arr_bolinger == bollinger_result[1][-1].item()
+
+
 def test_itemrule_must_return_active_field():
     arr_close = ItemRule(data, "close")
     assert arr_close._active_field == "close"
@@ -80,8 +89,9 @@ def test_itemrule_must_return_last_line():
 
 def test_itemrule_must_return_equal_result_on_run_fnc_of_talib_func():
     arr_close = ItemRule(data, "close", Overlap.sma, {"length": 5})
+    arr_run = arr_close.run()
     sma_result = Overlap.sma(data, length=5, target="close")
-    np.testing.assert_array_equal(arr_close.run(), sma_result)
+    np.testing.assert_array_equal(arr_run, sma_result)
 
 
 def test_itemrule_must_allow_init_void():

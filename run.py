@@ -1,11 +1,10 @@
-import json
+import uvicorn
+from fastapi import FastAPI
 
-from pycrypto.commons.utils import DataSources
-from pycrypto.trading import convert_data_to_numpy
+from pycrypto.routes import router
 
-with open("./tests/mock/BTCUSDT_1h_2025-01-01 00:00:00_dict.json") as f:
-    data = json.load(f)
+app = FastAPI(title="pycrypto")
+app.include_router(router)
 
-arr = convert_data_to_numpy(data, DataSources.mock)
-
-# by now just for tests
+if __name__ == "__main__":
+    uvicorn.run("run:app", host="127.0.0.1", port=9000, reload=True, reload_includes=["pycrypto"])
