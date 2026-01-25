@@ -64,9 +64,12 @@ def test_itemrule_must_be_comparable_one_each_other():
 
 
 def test_itemrule_binded_must_compared_one_each_other_by_function_result():
-    arr = ItemRule(data, Overlap.sma)
+    arr_sma = ItemRule(data, Overlap.sma)
     sma_result = Overlap.sma(data)
-    assert arr == sma_result[-1].item()
+    assert arr_sma == sma_result[-1].item()
+    arr_bolinger = ItemRule(data, Overlap.bollinger, target_operator=1)
+    bollinger_result = Overlap.bollinger(data)
+    assert arr_bolinger == bollinger_result[1][-1].item()
 
 
 def test_itemrule_must_return_active_field():

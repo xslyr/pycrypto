@@ -31,10 +31,11 @@ class ItemRule:
         If a Function not defined, the execution will consider last item of active field,, otherwise will use the last value of function execution.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, target_operator: int = 0):
         self.__check_and_set_params(*args)
+        self._target_operator = target_operator
 
-    def __check_and_set_params(self, *args, target_operator: int = 0):
+    def __check_and_set_params(self, *args):
         data, field, fnc, params = None, None, None, None
         for arg in args:
             match arg:
@@ -57,7 +58,6 @@ class ItemRule:
         self._arr = np.asarray(data) if data is not None else np.array([], dtype=_dtype)
         self._fnc = fnc
         self._params = params or {}
-        self._target_operator = target_operator
 
     def bind(self, *args):
         self.__check_and_set_params(*args)
@@ -83,7 +83,7 @@ class ItemRule:
         if self._fnc:
             run = self.run()
             if isinstance(run, Tuple):
-                run[self._target_operator][-1].item()
+                return run[self._target_operator][-1].item()
             return run[-1].item()
 
         return self.active_field[-1].item()

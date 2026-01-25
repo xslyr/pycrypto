@@ -9,18 +9,7 @@ import talib
 # https://github.com/TA-Lib/ta-lib-python/
 # https://github.com/TA-Lib/ta-lib-python/tree/master/docs/func_groups
 
-
-class MAType(Enum):
-    SMA = 0
-    EMA = 1
-    WMA = 2
-    DEMA = 3
-    TEMA = 4
-    TRIMA = 5
-    KAMA = 6
-    MAMA = 7
-    T3 = 8
-
+MAType = talib._ta_lib.MA_Type
 
 SMATarget = Enum(
     "SMATarget",
@@ -47,11 +36,12 @@ class Overlap:
 
     @staticmethod
     def bollinger(
-        data: np.array,
-        lenght: int = 5,
+        data: np.ndarray,
+        length: int = 5,
         devup: float = 2,
         devdown: float = 2,
         matype: MAType = MAType.SMA,
+        target: str = "close",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Bollinger Bands (BBANDS)
         Avalia a volatilidade e define níveis relativos de preços altos e baixos.
@@ -69,14 +59,14 @@ class Overlap:
             Usar para setups de volatilidade e reversão à média.
 
         """
-        return talib.BBANDS(data["close", lenght, devup, devdown, matype])
+        return talib.BBANDS(data[target], timeperiod=length, nbdevup=devup, nbdevdn=devdown, matype=matype)
 
 
 class Momentum:
     """Wrapper class to agregate some technical analysis functions"""
 
     @staticmethod
-    def rsi(data: np.array, lenght: int = 14) -> np.ndarray:
+    def rsi(data: np.array, length: int = 14, target: str = "close") -> np.ndarray:
         """RSI (Relative Strength Index)
         Mede a velocidade e a mudança dos movimentos de preços para identificar condições de sobrecompra ou sobrevenda.
 
@@ -91,7 +81,7 @@ class Momentum:
             Usar para identificar exaustão de movimento em mercados laterais ou para confirmar força de tendência.
 
         """
-        return talib.RSI(data["close"], lenght)
+        return talib.RSI(data[target], timeperiod=length)
 
     @staticmethod
     def macd(
@@ -143,15 +133,15 @@ class Momentum:
             data["high"],
             data["low"],
             data["close"],
-            fastk,
-            slowk,
-            slowk_type,
-            slowd,
-            slowd_type,
+            fastk_period=fastk,
+            slowk_period=slowk,
+            slowd_period=slowd,
+            slowk_matype=slowk_type,
+            slowd_matype=slowd_type,
         )
 
     @staticmethod
-    def adx(data: np.array, lenght: int = 14) -> np.ndarray:
+    def adx(data: np.array, length: int = 14) -> np.ndarray:
         """ADX (Average Directional Movement Index)
         O ADX mede a força de uma tendência, independentemente da direção (se é alta ou baixa).
 
@@ -167,10 +157,10 @@ class Momentum:
             Usar antes de executar qualquer estratégia, para decidir se deve usar algoritmos de seguimento de tendência ou de reversão à média.
 
         """
-        return talib.ADX(data["high"], data["low"], data["close"], lenght)
+        return talib.ADX(data["high"], data["low"], data["close"], timeperiod=length)
 
     @staticmethod
-    def mfi(data: np.array, lenght: int = 14) -> np.ndarray:
+    def mfi(data: np.array, length: int = 14) -> np.ndarray:
         """MFI (Money Flow Index)
         É essencialmente um "RSI ponderado pelo volume".
 
@@ -190,7 +180,7 @@ class Momentum:
             data["low"],
             data["close"],
             data["base_asset_volume"],
-            lenght,
+            length,
         )
 
 
