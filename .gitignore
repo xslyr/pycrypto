@@ -130,6 +130,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv/
 env/
 venv/
 ENV/
@@ -178,8 +179,8 @@ cython_debug/
 .python-version
 .vscode
 .gitignore
-archived
-data
+archived/
+data/
 logs/*
 
 
