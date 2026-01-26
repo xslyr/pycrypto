@@ -6,8 +6,6 @@ from binance.websocket.websocket_client import BinanceWebsocketClient
 from pycrypto.broker.websocket import BinanceWebsocket
 from pycrypto.commons import Cache
 
-Cache()
-
 
 def test_websocket_must_create_correct_string_connections():
     ws = BinanceWebsocket()
@@ -32,7 +30,7 @@ def test_websocket_start_must_append_data_on_cache():
     params = {"ticker": "BTCUSDT", "intervals": ["1s", "1m", "1h"]}
     ws = BinanceWebsocket(**params)
     ws.start_websocket()
-    time.sleep(5)
+    time.sleep(3)
     assert isinstance(ws.stream, BinanceWebsocketClient)
     ws.close_websocket()
 

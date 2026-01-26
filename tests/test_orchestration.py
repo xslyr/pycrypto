@@ -12,7 +12,6 @@ cbn = BrokerWrapper(test_mode=True)
 
 
 def test_loader_check_missing_data_must_return_a_dict():
-    Database().check_fix_db_integrity()
     loader = Loader()
     result = loader.check_missing_data("BTCUSDT", ["1h"], from_datetime="2025-01-01 00:00:00")
     assert isinstance(result, dict)
@@ -21,7 +20,6 @@ def test_loader_check_missing_data_must_return_a_dict():
 @pytest.mark.delete_db_data
 def test_broker_loader_must_dump_data_in_kline_tables():
     cbd = Database()
-    cbd.check_fix_db_integrity()
     cbd.clean_kline_table(["1d"])
 
     d_inicio = datetime(2025, 1, 1)

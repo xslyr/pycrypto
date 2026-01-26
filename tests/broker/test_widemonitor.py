@@ -10,6 +10,7 @@ from pycrypto.broker.widemonitor import BinanceMonitor
 def test_start_widemonitor():
     bm = BinanceMonitor()
     assert bm.monitor.size == 0
+
     bm.start_websocket()
     time.sleep(3)
     assert bm.monitor.size > 0
