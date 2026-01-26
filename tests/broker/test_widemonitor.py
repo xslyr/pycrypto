@@ -12,6 +12,6 @@ def test_start_widemonitor():
     assert bm.monitor.size == 0
 
     bm.start_websocket()
-    time.sleep(3)
+    time.sleep(5)
     assert bm.monitor.size > 0
     bm.close_websocket()

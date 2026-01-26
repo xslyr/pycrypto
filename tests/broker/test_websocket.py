@@ -30,7 +30,7 @@ def test_websocket_start_must_append_data_on_cache():
     params = {"ticker": "BTCUSDT", "intervals": ["1s", "1m", "1h"]}
     ws = BinanceWebsocket(**params)
     ws.start_websocket()
-    time.sleep(3)
+    time.sleep(5)
     assert isinstance(ws.stream, BinanceWebsocketClient)
     ws.close_websocket()
 
