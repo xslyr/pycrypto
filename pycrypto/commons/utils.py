@@ -1,8 +1,11 @@
 import os
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from operator import itemgetter
+from typing import Any, Dict
 from zoneinfo import ZoneInfo
+
+import numpy as np
 
 # https://python-binance.readthedocs.io/en/latest/constants.html
 
@@ -274,3 +277,29 @@ class BrokerUtils:
         "last_trade": ("last_trade", "i8"),
         "number_of_trades": ("number_of_trades", "i8"),
     }
+
+
+def convert_data_to_numpy(data: list[Dict], origin: DataSources, **kwargs) -> np.array:
+    """Method to prepare and convert crude data to numpy array"""
+    result = None
+    match origin:
+        case DataSources.websocket:
+            cols = kwargs.get("cols", BrokerUtils.kline_columns[2:-1])
+            dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
+            col_ids = itemgetter(*cols)(BrokerUtils.ws_columns_names)
+            arr = (itemgetter(*col_ids)(i) for i in data)
+            result = np.fromiter(arr, dtype=dtypes)
+
+        case DataSources.database:
+            cols = kwargs.get("cols", BrokerUtils.kline_columns[2:-1])
+            dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
+            arr = data
+            result = np.array(arr, dtype=dtypes)
+
+        case DataSources.mock:
+            cols = kwargs.get("cols", data[0].keys())
+            dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
+            arr = [tuple(itemgetter(*cols)(row)) for row in data]
+            result = np.array(arr, dtype=dtypes)
+
+    return result

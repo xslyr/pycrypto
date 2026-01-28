@@ -1,108 +1,75 @@
 import logging
 import os
-from typing import Any, Dict, Tuple
+from contextlib import contextmanager
+from typing import Any, Dict
 
 import numpy as np
-import psycopg
-from psycopg import Connection, OperationalError, sql
 
-from .utils import BrokerUtils, DatabaseDescription, Singleton, Timing
+# import psycopg
+# from psycopg import OperationalError
+from sqlalchemy import create_engine, delete, select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
+
+import pycrypto.commons.models_main as m
+
+from .utils import Singleton
 
 logger = logging.getLogger("app")
 
 
+# TODO: Will be better change to SQLAlchemy?
 class Database(metaclass=Singleton):
-    def __init__(self):
+    ModelMapping = {
+        "1s": m.Klines_1s,
+        "1m": m.Klines_1m,
+        "3m": m.Klines_3m,
+        "5m": m.Klines_5m,
+        "15m": m.Klines_15m,
+        "30m": m.Klines_30m,
+        "1h": m.Klines_1h,
+        "2h": m.Klines_2h,
+        "4h": m.Klines_4h,
+        "6h": m.Klines_6h,
+        "8h": m.Klines_8h,
+        "12h": m.Klines_12h,
+        "1d": m.Klines_1d,
+    }
+
+    def __init__(self, **kwargs):
         host, port, dbname, user, password = tuple(
             map(os.getenv, ["POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"])
         )
 
-        connection_string = f"dbname={dbname} user={user} password={password} host={host} port={port}"
-        try:
-            self._conn = psycopg.connect(connection_string)
-            self._conn.autocommit = True
-        except OperationalError:
-            logger.exception("Database connection error. Please verify environment variables and service availability.")
-            raise
+        self.__connection_str = f"postgresql+psycopg://{user}:{password}@{host}:{port}/{dbname}"
+        self.__engine = kwargs.get(
+            "mock_engine",
+            create_engine(self.__connection_str, pool_size=5, max_overflow=10, pool_timeout=20),
+        )
 
     @property
-    def conn(self) -> Connection:
-        return self._conn
+    def connection_str(self):
+        return self.__connection_str
 
-    def rollback(self):
-        self.conn.rollback()
-
-    def check_fix_db_integrity(self):
-        try:
-            cur = self.conn.cursor()
-            select_result = cur.execute(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'AND table_type = 'BASE TABLE'; "
-            ).fetchall()
-
-            if len(select_result) < DatabaseDescription.qty_tables:
-                db_structure = DatabaseDescription.db_structure
-
-                sql_base_create = "CREATE TABLE IF NOT EXISTS {} ({}, {});"
-                for table, table_structure in db_structure.items():
-                    columns = " , ".join(
-                        map(
-                            lambda x: " ".join(x),
-                            table_structure["columns"].items(),
-                        )
-                    )
-                    primary_key = table_structure["primary_key"]
-                    if table == "klines_tables":
-                        for kline in Timing.klines_intervals_available:
-                            table_name = f"klines_{kline}"
-                            create_command = sql.SQL(sql_base_create).format(
-                                sql.Identifier(table_name),
-                                sql.SQL(columns),
-                                sql.SQL(primary_key),
-                            )
-                            cur.execute(create_command)
-
-                    else:
-                        create_command = sql.SQL(sql_base_create).format(
-                            sql.Identifier(table),
-                            sql.SQL(columns),
-                            sql.SQL(primary_key),
-                        )
-                        cur.execute(create_command)
-            return True
-
-        except Exception:
-            self.conn.rollback()
-            logger.exception("Error on check_fix_db_integrity. ")
-            raise
-
-    def destroy_all_tables(self, confirmation=False):
-        try:
-            if confirmation:
-                cur = self.conn.cursor()
-                select_result = cur.execute(
-                    "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'AND table_type = 'BASE TABLE'; "
-                ).fetchall()
-
-                for line in select_result:
-                    drop_command = sql.SQL("DROP TABLE IF EXISTS {} CASCADE;").format(sql.Identifier(line[0]))
-                    cur.execute(drop_command)
-
-                return True
-            return False
-        except Exception:
-            logger.exception("Error on destroy_all_tables.")
-            raise
+    @contextmanager
+    def session_factory(self):
+        with Session(self.__engine) as session:
+            yield session
 
     def clean_kline_table(self, intervals: list[str]):
+        models = [self.ModelMapping.get(i) for i in intervals]
+
+        if len(models) == 0:
+            logger.error(f"Models not found to intervals {intervals}.")
+            raise
+
         try:
-            cur = self.conn.cursor()
-            for i in intervals:
-                table = f"klines_{i}"
-                query = sql.SQL("delete from {}").format(sql.Identifier(table))
-                cur.execute(query)
-            return True
+            with self.session_factory() as session:
+                for m in models:
+                    stmt = delete(m)
+                    session.execute(stmt)
+                session.commit()
         except Exception:
-            self.conn.rollback()
             logger.exception("Error on clen_kline_table.")
             raise
 
@@ -113,62 +80,54 @@ class Database(metaclass=Singleton):
         from_datetime: Any = "",
         between_datetimes: tuple[Any, Any] = ("", ""),
         **kwargs,
-    ) -> list[Tuple]:
-        only_columns: list[str] = kwargs.get("only_columns", BrokerUtils.kline_columns[2:-1])
-        columns = sql.SQL(", ").join(map(sql.Identifier, only_columns))
-        query, params = "", ""
+    ):
+        return_as = kwargs.get("return_as", "object")
 
-        if from_datetime != "" and between_datetimes != ("", ""):
-            raise Exception("Is necessary ONLY one of from_datetime or between_datetime param.")
+        model_class = self.ModelMapping.get(interval)
 
-        table = f"klines_{interval}"
+        if not model_class:
+            logger.error(f"Models not found to interval {interval}.")
+            raise
 
         if from_datetime == "" and between_datetimes == ("", ""):
-            query = sql.SQL("SELECT {} FROM {} WHERE ticker=%s").format(columns, sql.Identifier(table))
-            params = (ticker,)
+            stmt = select(model_class).where(model_class.ticker == ticker)
 
         if from_datetime != "":
-            query = sql.SQL("SELECT {} FROM {} WHERE ticker=%s AND open_time >= %s ").format(
-                columns, sql.Identifier(table)
-            )
-            params = (ticker, Timing.convert_any_to_timestamp(from_datetime))
+            stmt = select(model_class).where(model_class.ticker == ticker, model_class.open_time >= from_datetime)
 
         if all(between_datetimes):
-            query = sql.SQL("SELECT {} FROM {} WHERE ticker=%s AND open_time between %s and %s ").format(
-                columns, sql.Identifier(table)
-            )
-            params = (
-                ticker,
-                Timing.convert_any_to_timestamp(between_datetimes[0]),
-                Timing.convert_any_to_timestamp(between_datetimes[1]),
-            )
+            stmt = select(model_class).where()
 
-        cur = self.conn.cursor()
-        return cur.execute(query, params).fetchall()
+        with self.session_factory() as session:
+            result = session.execute(stmt)
+            if return_as == "tuple":
+                return result
+
+            return result.scalars().all()
 
     def insert_klines(self, ticker: str, interval: str, data: np.ndarray | list[Dict]) -> bool:
+        model_class = self.ModelMapping.get(interval)
+
+        if not model_class:
+            logger.error(f"Models not found to interval {interval}.")
+            return False
+
         try:
-            table = f"klines_{interval}"
-            columns = DatabaseDescription.db_structure["klines_tables"]["columns"].keys()
-
-            column_names = sql.SQL(", ").join(sql.Identifier(c) for c in columns)
-            placeholders = sql.SQL(", ").join(sql.Placeholder() * len(columns))
-
-            base_sql = "INSERT INTO {} ({}) VALUES ({}) ON CONFLICT (ticker, open_time) DO NOTHING;"
-            query = sql.SQL(base_sql).format(sql.Identifier(table), column_names, placeholders)
-
             if isinstance(data, np.ndarray):
-                data_to_insert = [(ticker, *row) for row in data.tolist()]
-
+                columns = ("ticker",) + data.dtype.names
+                data_to_insert = [dict(zip(columns, (ticker,) + row)) for row in data.tolist()]
             else:
-                data_to_insert = [(ticker, *row.values()) for row in data]
+                data_to_insert = [dict({"ticker": ticker}).update(row) for row in data]
 
-            cur = self.conn.cursor()
-            cur.executemany(query, data_to_insert)
+            stmt = insert(model_class).values(data_to_insert)
+            stmt = stmt.on_conflict_do_nothing(index_elements=["ticker", "open_time"])
+
+            with self.session_factory() as session:
+                session.execute(stmt)
+                session.commit()
 
             return True
 
-        except Exception:
-            self.conn.rollback()
-            logger.exception(f"Error on inserting klines, ticker {ticker}, interval {interval}, data: {data[:3]}...")
-            raise
+        except Exception as e:
+            logger.exception(f"Error klines insertion ({ticker}, {interval}): {e}")
+            return False

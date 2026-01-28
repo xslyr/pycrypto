@@ -9,7 +9,7 @@ services:
     ports:
       - "$POSTGRES_PORT:5432"
     volumes:
-      - ./data/app_postgres:/var/lib/postgresql
+      - ./data/postgres:/var/lib/postgresql
     networks:
       - default
   
@@ -22,7 +22,7 @@ services:
     ports:
       - "$REDIS_PORT:6379"
     volumes:
-      - ./data/app_redis:/data
+      - ./data/redis:/data
     networks:
       - default
       
