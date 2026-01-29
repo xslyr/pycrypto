@@ -8,9 +8,9 @@ from typing import Any, Tuple
 import numpy as np
 from tqdm import tqdm
 
+from pycrypto import db
 from pycrypto.broker import Broker
-from pycrypto.commons.database import Database
-from pycrypto.commons.utils import Timing
+from pycrypto.commons.utils import Timing, convert_any_to_datetime, get_timestamp_range_list
 
 logger = logging.getLogger("app")
 
@@ -26,8 +26,7 @@ class Loader:
     """
 
     def __init__(self, test_mode=False, **kwargs):
-        self.db: Database = kwargs.get("database", Database())
-        self.br: Broker = kwargs.get("broker", Broker(test_mode))
+        self.br: Broker = kwargs.get("broker", Broker(test_mode=test_mode))
 
     def __check_datetime_params(self, from_datetime: Any, between_datetimes: Any):
         """Wrapper for check datetime params.
@@ -64,11 +63,11 @@ class Loader:
         start, end = None, None
 
         if from_datetime != "":
-            start = Timing.convert_any_to_datetime(from_datetime)
+            start = convert_any_to_datetime(from_datetime)
             end = datetime.combine(datetime.now().date(), time(0, 0))
         else:
-            start = Timing.convert_any_to_datetime(between_datetimes[0])
-            end = Timing.convert_any_to_datetime(between_datetimes[1])
+            start = convert_any_to_datetime(between_datetimes[0])
+            end = convert_any_to_datetime(between_datetimes[1])
 
         if verbose:
             intv = ", ".join(intervals)
@@ -106,14 +105,11 @@ class Loader:
 
         remaining_timestamps = {}
         for i in intervals[::-1]:
-            timestamp_range = Timing.get_timestamp_range_list(start, end, i)
+            timestamp_range = get_timestamp_range_list(start, end, i)
             timestamps_saved = [
                 int(i[0] / 1000)
-                for i in self.db.select_klines(
-                    ticker,
-                    i,
-                    between_datetimes=(start, end),
-                    only_columns=["open_time"],
+                for i in db.select_klines(
+                    ticker, i, between_datetimes=(start, end), cols=["open_time"], returns="tuple"
                 )
             ]
 
@@ -159,7 +155,7 @@ class Loader:
                 date_aux = start
                 for _ in range(full_loops):
                     data = self.br.get_klines(ticker, i, date_aux)
-                    self.db.insert_klines(ticker, i, data)
+                    db.insert_klines(ticker, i, data)
 
                     date_aux += 1000 * delta
                     if full_loops > 60:
@@ -169,13 +165,12 @@ class Loader:
                         process.update(1)
 
                 data = self.br.get_klines(ticker, i, date_aux, as_dict=True, limit=final_round)
-                self.db.insert_klines(ticker, i, data)
+                db.insert_klines(ticker, i, data)
                 if verbose:
                     process.update(1)
 
             return True
 
         except Exception:
-            self.db.rollback()
             logger.exception("Error on loading binance data into db.")
             raise

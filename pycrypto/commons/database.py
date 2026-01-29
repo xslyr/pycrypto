@@ -4,21 +4,16 @@ from contextlib import contextmanager
 from typing import Any, Dict
 
 import numpy as np
-
-# import psycopg
-# from psycopg import OperationalError
 from sqlalchemy import create_engine, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 import pycrypto.commons.models_main as m
-
-from .utils import Singleton
+from pycrypto.commons.utils import Singleton, Timing, convert_any_to_timestamp
 
 logger = logging.getLogger("app")
 
 
-# TODO: Will be better change to SQLAlchemy?
 class Database(metaclass=Singleton):
     ModelMapping = {
         "1s": m.Klines_1s,
@@ -37,15 +32,17 @@ class Database(metaclass=Singleton):
     }
 
     def __init__(self, **kwargs):
-        host, port, dbname, user, password = tuple(
-            map(os.getenv, ["POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"])
-        )
+        self.__connection_str = kwargs.get("connection_str", "")
+        configs = kwargs.get("configs", {})
 
-        self.__connection_str = f"postgresql+psycopg://{user}:{password}@{host}:{port}/{dbname}"
-        self.__engine = kwargs.get(
-            "mock_engine",
-            create_engine(self.__connection_str, pool_size=5, max_overflow=10, pool_timeout=20),
-        )
+        if not self.__connection_str:
+            host, port, dbname, user, password = tuple(
+                map(os.getenv, ["POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"])
+            )
+            self.__connection_str = f"postgresql+psycopg://{user}:{password}@{host}:{port}/{dbname}"
+            configs = {"pool_size": 5, "max_overflow": 10, "pool_timeout": 20}
+
+        self.__engine = create_engine(self.__connection_str, **configs)
 
     @property
     def connection_str(self):
@@ -60,18 +57,18 @@ class Database(metaclass=Singleton):
         models = [self.ModelMapping.get(i) for i in intervals]
 
         if len(models) == 0:
-            logger.error(f"Models not found to intervals {intervals}.")
-            raise
+            err = f"Models not found to intervals {intervals}."
+            logger.error(err)
+            raise Exception(err)
 
         try:
             with self.session_factory() as session:
-                for m in models:
-                    stmt = delete(m)
-                    session.execute(stmt)
+                for model in models:
+                    session.execute(delete(model))
                 session.commit()
-        except Exception:
+        except Exception as e:
             logger.exception("Error on clen_kline_table.")
-            raise
+            raise e
 
     def select_klines(
         self,
@@ -81,29 +78,56 @@ class Database(metaclass=Singleton):
         between_datetimes: tuple[Any, Any] = ("", ""),
         **kwargs,
     ):
-        return_as = kwargs.get("return_as", "object")
+        if interval not in Timing.klines_intervals_available:
+            e = "Interval not available."
+            logger.exception(e)
+            raise Exception(e)
 
-        model_class = self.ModelMapping.get(interval)
+        returns = kwargs.get("returns", "model")
+        cols = kwargs.get("cols", "")
+        model = self.ModelMapping.get(interval)
+        model_cols = None
 
-        if not model_class:
-            logger.error(f"Models not found to interval {interval}.")
-            raise
+        if returns in ["tuple", "dict"]:
+            if cols == "":
+                model_cols = model.__table__.columns
+            else:
+                try:
+                    model_cols = [model.__table__.columns[c] for c in cols]
+                except Exception:
+                    e = "Some column are not available."
+                    logger.exception(e)
+                    raise
+
+        match model_cols:
+            case None:
+                stmt = select(model)
+            case list():
+                stmt = select(*model_cols)
+            case _:
+                stmt = select(model_cols)
 
         if from_datetime == "" and between_datetimes == ("", ""):
-            stmt = select(model_class).where(model_class.ticker == ticker)
+            stmt = stmt.where(model.ticker == ticker)
 
         if from_datetime != "":
-            stmt = select(model_class).where(model_class.ticker == ticker, model_class.open_time >= from_datetime)
+            start = convert_any_to_timestamp(from_datetime)
+            stmt = stmt.where(model.ticker == ticker, model.open_time >= start)
 
         if all(between_datetimes):
-            stmt = select(model_class).where()
+            start = convert_any_to_timestamp(between_datetimes[0])
+            end = convert_any_to_timestamp(between_datetimes[1])
+            stmt = stmt.where(model.ticker == ticker, model.open_time.between(start, end + 1))
 
         with self.session_factory() as session:
             result = session.execute(stmt)
-            if return_as == "tuple":
-                return result
+            match returns:
+                case "model":
+                    return result.scalars().all()
+                case "dict":
+                    return [row._asdict() for row in result]
 
-            return result.scalars().all()
+            return [tuple(row) for row in result]
 
     def insert_klines(self, ticker: str, interval: str, data: np.ndarray | list[Dict]) -> bool:
         model_class = self.ModelMapping.get(interval)
@@ -117,7 +141,7 @@ class Database(metaclass=Singleton):
                 columns = ("ticker",) + data.dtype.names
                 data_to_insert = [dict(zip(columns, (ticker,) + row)) for row in data.tolist()]
             else:
-                data_to_insert = [dict({"ticker": ticker}).update(row) for row in data]
+                data_to_insert = [{"ticker": ticker, **row} for row in data]
 
             stmt = insert(model_class).values(data_to_insert)
             stmt = stmt.on_conflict_do_nothing(index_elements=["ticker", "open_time"])
@@ -130,4 +154,4 @@ class Database(metaclass=Singleton):
 
         except Exception as e:
             logger.exception(f"Error klines insertion ({ticker}, {interval}): {e}")
-            return False
+            raise e

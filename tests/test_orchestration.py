@@ -6,8 +6,6 @@ from pycrypto.commons.database import Database
 from pycrypto.orchestration import Loader
 from tests.broker_wrapper import BrokerWrapper
 
-# TODO: implements the tests of data orchestrator
-
 cbn = BrokerWrapper(test_mode=True)
 
 

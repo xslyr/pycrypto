@@ -1,15 +1,10 @@
-import os
 from datetime import datetime, timedelta
-from enum import Enum
 from operator import itemgetter
-from typing import Any, Dict
-from zoneinfo import ZoneInfo
+from typing import Any, Dict, Tuple
 
 import numpy as np
 
 # https://python-binance.readthedocs.io/en/latest/constants.html
-
-DataSources = Enum("OriginsAvailable", ["database", "websocket", "mock"])
 
 
 class Timing:
@@ -48,103 +43,15 @@ class Timing:
         "1d": timedelta(days=1),
     }
 
-    tz = ZoneInfo(os.getenv("TZ", "UTC"))
-
-    @staticmethod
-    def convert_any_to_datetime(_datetime: Any):
-        """Method to convert any datatype for datetime"""
-        match _datetime:
-            case str():
-                if len(_datetime) != 19:
-                    raise Exception(
-                        "On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param."
-                    )
-                adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S")
-            case int() | float():
-                if len(str(int(_datetime))) > 10:
-                    adjusted_start_time = datetime.fromtimestamp(_datetime / 1000, tz=Timing.tz)
-                else:
-                    adjusted_start_time = datetime.fromtimestamp(_datetime, tz=Timing.tz)
-            case datetime():
-                adjusted_start_time = _datetime
-
-        return adjusted_start_time.replace(tzinfo=None)
-
-    @staticmethod
-    def convert_any_to_timestamp(_datetime: Any):
-        """Method for convert any datatype for timestamp"""
-        match _datetime:
-            case str():
-                if len(_datetime) != 19:
-                    raise Exception(
-                        "On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param."
-                    )
-                adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S").replace(tzinfo=Timing.tz)
-                adjusted_start_time = int(adjusted_start_time.timestamp() * 1000)
-
-            case int() | float():
-                if len(str(_datetime)) < 13:
-                    adjusted_start_time = int(str(int(_datetime)).ljust(13, "0"))
-                else:
-                    adjusted_start_time = _datetime
-
-            case datetime():
-                dt = _datetime.replace(tzinfo=Timing.tz) if _datetime.tzinfo is None else _datetime
-                adjusted_start_time = int(dt.timestamp() * 1000)
-
-            case _:
-                raise Exception("Unknown timestamp format.")
-
-        return adjusted_start_time
-
-    @staticmethod
-    def get_timestamp_range_list(start: datetime, end: datetime, interval: str):
-        """Method to generate a timestamp range list between a datetime intervals"""
-
-        _start = int(start.timestamp())
-        _end = int(end.timestamp())
-        _steps = int(Timing.delta_intervals[interval].total_seconds())
-
-        return list(range(_start, _end + 1, _steps))
-
-
-class DatabaseDescription:
-    """Class responsable for aggregate database context constants and common functions correlated with it."""
-
-    db_structure = {
-        "app_config": {
-            "columns": {"key": "varchar(50) not null", "value": "text"},
-            "primary_key": "primary key (key)",
-        },
-        "klines_tables": {
-            "columns": {
-                "ticker": "varchar(10) not null",
-                "open_time": "bigint not null",
-                "open": "real not null",
-                "high": "real not null",
-                "low": "real not null",
-                "close": "real not null",
-                "base_asset_volume": "double precision not null",
-                "close_time": "bigint not null",
-                "quote_asset_volume": "double precision not null",
-                "number_of_trades": "bigint not null",
-                "taker_buy_base_asset_volume": "double precision not null",
-                "taker_buy_quote_asset_volume": "double precision not null",
-            },
-            "primary_key": "primary key (ticker, open_time)",
-        },
-    }
-    qty_tables = len(db_structure.keys()) + len(Timing.klines_intervals_available) - 1
-
 
 class Singleton(type):
     """Metaclass who implements parent structure of singleton objects"""
 
     _instance = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, **kwargs):
         if cls not in cls._instance:
-            cls._instance[cls] = super().__call__(*args, **kwargs)
+            cls._instance[cls] = super().__call__(**kwargs)
         return cls._instance[cls]
 
     @classmethod
@@ -279,27 +186,83 @@ class BrokerUtils:
     }
 
 
-def convert_data_to_numpy(data: list[Dict], origin: DataSources, **kwargs) -> np.array:
+def convert_data_to_numpy(data: list[Dict | Tuple], from_websocket=False, **kwargs) -> np.array:
     """Method to prepare and convert crude data to numpy array"""
     result = None
-    match origin:
-        case DataSources.websocket:
-            cols = kwargs.get("cols", BrokerUtils.kline_columns[2:-1])
+    if from_websocket:
+        cols = kwargs.get("cols", BrokerUtils.kline_columns[2:-1])
+        dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
+        col_ids = itemgetter(*cols)(BrokerUtils.ws_columns_names)
+        arr = (itemgetter(*col_ids)(i) for i in data)
+        result = np.fromiter(arr, dtype=dtypes)
+    else:
+        check = data[0] if len(data) > 0 else []
+        if isinstance(check, dict):
+            cols = kwargs.get("cols", data[0].keys())
             dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
-            col_ids = itemgetter(*cols)(BrokerUtils.ws_columns_names)
-            arr = (itemgetter(*col_ids)(i) for i in data)
-            result = np.fromiter(arr, dtype=dtypes)
-
-        case DataSources.database:
+            arr = [tuple(itemgetter(*cols)(row)) for row in data]
+            result = np.array(arr, dtype=dtypes)
+        else:
             cols = kwargs.get("cols", BrokerUtils.kline_columns[2:-1])
             dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
             arr = data
             result = np.array(arr, dtype=dtypes)
 
-        case DataSources.mock:
-            cols = kwargs.get("cols", data[0].keys())
-            dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
-            arr = [tuple(itemgetter(*cols)(row)) for row in data]
-            result = np.array(arr, dtype=dtypes)
-
     return result
+
+
+def convert_any_to_datetime(_datetime: Any):
+    """Method to convert any datatype for datetime"""
+    match _datetime:
+        case str():
+            if len(_datetime) != 19:
+                raise Exception(
+                    "On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param."
+                )
+            adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S")
+        case int() | float():
+            if len(str(int(_datetime))) > 10:
+                adjusted_start_time = datetime.fromtimestamp(_datetime / 1000)
+            else:
+                adjusted_start_time = datetime.fromtimestamp(_datetime)
+        case datetime():
+            adjusted_start_time = _datetime
+
+    return adjusted_start_time
+
+
+def convert_any_to_timestamp(_datetime: Any):
+    """Method for convert any datatype for timestamp"""
+    match _datetime:
+        case str():
+            if len(_datetime) != 19:
+                raise Exception(
+                    "On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param."
+                )
+            adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S")
+            adjusted_start_time = int(adjusted_start_time.timestamp() * 1000)
+
+        case int() | float():
+            if len(str(_datetime)) < 13:
+                adjusted_start_time = int(str(int(_datetime)).ljust(13, "0"))
+            else:
+                adjusted_start_time = _datetime
+
+        case datetime():
+            dt = _datetime
+            adjusted_start_time = int(dt.timestamp() * 1000)
+
+        case _:
+            raise Exception("Unknown timestamp format.")
+
+    return adjusted_start_time
+
+
+def get_timestamp_range_list(start: datetime, end: datetime, interval: str):
+    """Method to generate a timestamp range list between a datetime intervals"""
+
+    _start = int(start.timestamp())
+    _end = int(end.timestamp())
+    _steps = int(Timing.delta_intervals[interval].total_seconds())
+
+    return list(range(_start, _end + 1, _steps))

@@ -52,6 +52,7 @@ doc = [
 [tool.poetry.dependencies]
 python = ">=3.13,<4.0"
 
+
 # ------------------------- taskipy -------------------------
 [tool.taskipy.tasks]
 lint = "pylint pycrypto/"
@@ -83,15 +84,13 @@ ignore-paths = ["^tests/.*$"]
 [tool.pylint.format]
 max-line-length = 180  
 
-
+# TODO: revisar as regras de lint afim de diminuir as exceções
 [tool.pylint."messages control"]
 disable = [
     "too-few-public-methods",       # R0903
     "too-many-arguments",           # R0913
     "too-many-locals",              # R0914
     "too-many-positional-arguments",# R0917
-
-    "attribute-defined-outside-init",#W021 ItemRule implements over np.array and must do it.
 
     "no-member",                    # E1101
     "dangerous-default-value",      # W0102
@@ -110,6 +109,7 @@ disable = [
     "consider-using-f-string",      # C0209
     "invalid-name",                 # C0103
     "c-extension-no-member",        # I1101
+    "too-many-branches",            # R0912: Too many branches (13/12)
     "protected-access",             
     "duplicate-code"                # R0801: Binance spot/websocket has columns on different ordering. We must repeat something like this.
 ]
@@ -119,7 +119,6 @@ disable = [
 [tool.ruff.lint]
 select = ["E", "F", "W"]
 ignore = [
-    "D205", # 1 blank line required between summary line and description
     "D400", # First line should end with a period
     "D401", # First line of docstring should be in imperative mood
     "D415", # First line should end with a period, question mark, or exclamation point

@@ -1,21 +1,22 @@
 """database_initialization
 
-Revision ID: d7796e3d23b4
+Revision ID: 4dc2110ffdea
 Revises:
-Create Date: 2026-01-27 21:31:14.561388
+Create Date: 2026-01-28 18:41:21.220130
 
 """
 
 from typing import Sequence, Union
 
 import pgvector
+import pgvector.sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "d7796e3d23b4"
+revision: str = "4dc2110ffdea"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

@@ -1,27 +1,8 @@
 import numpy as np
 import pytest
 
-from pycrypto.commons.database import Database
-from pycrypto.commons.utils import DataSources
-from pycrypto.trading import ItemRule, convert_data_to_numpy
+from pycrypto.trading import ItemRule
 from pycrypto.trading.technical_analysis import Overlap
-from tests.broker_wrapper import BrokerWrapper
-
-# raw_data = BrokerWrapper().get_klines("BTCUSDT", "1h", "2025-01-01 00:00:00")
-# data = convert_data_to_numpy(raw_data, DataSources.mock)
-
-
-def test_convert_mock_data_to_numpy(broker):
-    raw_data = broker.get_klines("BTCUSDT", "1h", "2025-01-01 00:00:00")
-    assert not isinstance(raw_data, np.ndarray)
-    data = convert_data_to_numpy(raw_data, DataSources.mock)
-    assert isinstance(data, np.ndarray)
-
-
-def test_convert_db_data_to_numpy():
-    db_data = Database().select_klines("BTCUSD", "1d")
-    arr_db = convert_data_to_numpy(db_data, DataSources.database)
-    assert isinstance(arr_db, np.ndarray)
 
 
 @pytest.mark.parametrize(
