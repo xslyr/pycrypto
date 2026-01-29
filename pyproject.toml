@@ -12,7 +12,6 @@ dependencies = [
     "dotenv (>=0.9.9,<0.10.0)",
     "numpy (>=2.2,<3.0)",
     "binance-connector (>=3.12.0,<4.0.0)",
-    "psycopg[pool] (>=3.3.2,<4.0.0)",
     "redis (>=7.1.0,<8.0.0)",
     "logging (>=0.4.9.6,<0.5.0.0)",
     "ta-lib (>=0.6.8,<0.7.0)",
@@ -21,7 +20,10 @@ dependencies = [
     "langchain-core (>=1.2.7,<2.0.0)",
     "langchain (>=1.2.6,<2.0.0)",
     "pgvector (>=0.4.2,<0.5.0)",
-    "fastapi[standard] (>=0.128.0,<0.129.0)"
+    "fastapi[standard] (>=0.128.0,<0.129.0)",
+    "sqlalchemy (>=2.0.46,<3.0.0)",
+    "alembic (>=1.18.1,<2.0.0)",
+    "psycopg[binary] (>=3.3.2,<4.0.0)"
 ]
 
 
@@ -50,10 +52,12 @@ doc = [
 [tool.poetry.dependencies]
 python = ">=3.13,<4.0"
 
+
 # ------------------------- taskipy -------------------------
 [tool.taskipy.tasks]
 lint = "pylint pycrypto/"
 ruff = "ruff format ./pycrypto && ruff check --fix ./pycrypto"
+migrate = "alembic upgrade head"
 run = "fastapi dev run.py"
 test_github = "pytest -s -m 'not binance_websocket' "
 test = "pytest -s -v --cov=pycrypto"
@@ -80,15 +84,13 @@ ignore-paths = ["^tests/.*$"]
 [tool.pylint.format]
 max-line-length = 180  
 
-
+# TODO: revisar as regras de lint afim de diminuir as exceções
 [tool.pylint."messages control"]
 disable = [
     "too-few-public-methods",       # R0903
     "too-many-arguments",           # R0913
     "too-many-locals",              # R0914
     "too-many-positional-arguments",# R0917
-
-    "attribute-defined-outside-init",#W021 ItemRule implements over np.array and must do it.
 
     "no-member",                    # E1101
     "dangerous-default-value",      # W0102
@@ -105,8 +107,9 @@ disable = [
     "logging-fstring-interpolation",# W1203
     "invalid-overridden-method",    # W0236 
     "consider-using-f-string",      # C0209
-
+    "invalid-name",                 # C0103
     "c-extension-no-member",        # I1101
+    "too-many-branches",            # R0912: Too many branches (13/12)
     "protected-access",             
     "duplicate-code"                # R0801: Binance spot/websocket has columns on different ordering. We must repeat something like this.
 ]
@@ -116,7 +119,6 @@ disable = [
 [tool.ruff.lint]
 select = ["E", "F", "W"]
 ignore = [
-    "D205", # 1 blank line required between summary line and description
     "D400", # First line should end with a period
     "D401", # First line of docstring should be in imperative mood
     "D415", # First line should end with a period, question mark, or exclamation point

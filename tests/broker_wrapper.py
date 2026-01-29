@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any
 
@@ -61,7 +62,7 @@ class BrokerWrapper(Broker):
 
     def return_fake_error(self, ticker):
         params = {
-            "status_code": 400,
+            "status_code": HTTPStatus.BAD_REQUEST,
             "error_code": -1121,
             "error_message": "Invalid symbol.",
             "header": {"Content-Type": "application/json;charset=UTF-8"},

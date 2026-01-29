@@ -34,11 +34,12 @@ class Broker(metaclass=Singleton):
 
         self.test_mode = test_mode
         try:
-            self.spot = BinanceSpot(test_mode)
+            self.spot = BinanceSpot(test_mode=test_mode)
         except Exception:
             logger.exception("Error on binance connection. Please verify environment variables or internet")
         self.websocket: BinanceWebsocket
         self._trade_fee = None
+        self.widemonitor = None
 
     @property
     def wallet(self) -> dict:

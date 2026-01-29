@@ -7,7 +7,7 @@ import numpy as np
 from binance.spot import Spot
 from dotenv import load_dotenv
 
-from pycrypto.commons.utils import BrokerUtils, Singleton, Timing
+from pycrypto.commons.utils import BrokerUtils, Singleton, convert_any_to_timestamp
 
 # https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data
 
@@ -72,7 +72,7 @@ class BinanceSpot(metaclass=Singleton):
         limit: int = 1000,
     ) -> np.ndarray | list[dict]:
         try:
-            adjusted_start_time = Timing.convert_any_to_timestamp(start_time)
+            adjusted_start_time = convert_any_to_timestamp(start_time)
             data = self._client.klines(
                 symbol=ticker,
                 interval=interval,

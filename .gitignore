@@ -180,7 +180,10 @@ cython_debug/
 .vscode
 .gitignore
 archived/
-data/
+data/postgres
+data/redis
+data/pgvector/data
+
 logs/*
 
 

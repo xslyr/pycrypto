@@ -6,8 +6,6 @@ from pycrypto.commons.cache import Cache
 from pycrypto.commons.utils import BrokerUtils
 from tests.broker_wrapper import BrokerWrapper
 
-Cache()
-
 
 def test_cache_must_delete_all_keys():
     Cache.flushdb()
