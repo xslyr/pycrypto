@@ -4,7 +4,7 @@ from typing import overload
 
 from binance.websocket.websocket_client import BinanceWebsocketClient
 
-from pycrypto.commons import Cache
+from pycrypto.commons.cache import Cache
 from pycrypto.commons.utils import Singleton
 
 # https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams/Kline-Candlestick-Streams

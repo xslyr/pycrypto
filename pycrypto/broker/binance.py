@@ -5,7 +5,8 @@ import numpy as np
 
 from pycrypto.broker.websocket import BinanceWebsocket
 from pycrypto.broker.widemonitor import BinanceMonitor
-from pycrypto.commons import Cache, Database
+from pycrypto.commons.cache import Cache
+from pycrypto.commons.database import Database
 from pycrypto.commons.utils import Singleton
 
 from .spot import BinanceSpot

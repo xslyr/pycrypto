@@ -4,7 +4,7 @@ import pytest
 from binance.websocket.websocket_client import BinanceWebsocketClient
 
 from pycrypto.broker.websocket import BinanceWebsocket
-from pycrypto.commons import Cache
+from pycrypto.commons.cache import Cache
 
 
 def test_websocket_must_create_correct_string_connections():

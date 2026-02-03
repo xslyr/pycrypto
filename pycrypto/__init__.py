@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 
-from pycrypto.commons import Cache, Database, VectorDatabase
+from pycrypto.commons.cache import Cache
+from pycrypto.commons.database import Database
+from pycrypto.commons.vectordb import VectorDatabase
 
 load_dotenv()
 db = Database()

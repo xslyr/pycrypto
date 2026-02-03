@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from pycrypto.broker.broker import Broker
+from pycrypto.broker.binance import Broker
 from pycrypto.broker.widemonitor import BinanceMonitor
 
 

@@ -3,7 +3,8 @@ import operator
 import pytest
 
 from pycrypto import db
-from pycrypto.commons.utils import Singleton, convert_data_to_numpy
+from pycrypto.commons.utils import Singleton
+from pycrypto.orchestration.utils import convert_data_to_numpy
 from tests.broker_wrapper import BrokerWrapper
 
 

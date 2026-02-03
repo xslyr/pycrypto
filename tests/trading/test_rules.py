@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from pycrypto.trading import ItemRule
+from pycrypto.trading.rules import ItemRule
 from pycrypto.trading.technical_analysis import Overlap
 
 

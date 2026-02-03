@@ -9,7 +9,8 @@ import redis
 from redis.exceptions import ConnectionError as RedisConnectionError, ResponseError
 from redis.typing import ResponseT
 
-from pycrypto.commons.utils import BrokerUtils, Singleton
+from pycrypto.broker.utils import websocket_opened_maxlen
+from pycrypto.commons.utils import Singleton
 
 logger = logging.getLogger("app")
 
@@ -28,7 +29,7 @@ class Cache(metaclass=Singleton):
                 "health_check_interval": 30,
                 "decode_responses": True,
             }
-            Cache._maxlen = BrokerUtils.websocket_opened_maxlen
+            Cache._maxlen = websocket_opened_maxlen
             try:
                 Cache._cache = redis.Redis(**params)
                 Cache._cache.ping()

@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 import pycrypto.commons.models_main as m
-from pycrypto.commons.utils import Singleton, Timing, convert_any_to_timestamp
+from pycrypto.commons.utils import Singleton, convert_any_to_timestamp, klines_intervals_available
 
 logger = logging.getLogger("app")
 
@@ -78,7 +78,7 @@ class Database(metaclass=Singleton):
         between_datetimes: tuple[Any, Any] = ("", ""),
         **kwargs,
     ):
-        if interval not in Timing.klines_intervals_available:
+        if interval not in klines_intervals_available:
             e = "Interval not available."
             logger.exception(e)
             raise Exception(e)

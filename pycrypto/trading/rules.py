@@ -3,7 +3,7 @@ from typing import Any, Tuple
 
 import numpy as np
 
-from pycrypto.commons.utils import BrokerUtils
+from pycrypto.broker.utils import columns_dtype
 
 
 class ItemRule:
@@ -51,9 +51,9 @@ class ItemRule:
         self._active_field = field or "close"
 
         if isinstance(self._active_field, str):
-            _dtype = [BrokerUtils.columns_dtype[self._active_field]]
+            _dtype = [columns_dtype[self._active_field]]
         else:
-            _dtype = list(itemgetter(*self._active_field)(BrokerUtils.columns_dtype))
+            _dtype = list(itemgetter(*self._active_field)(columns_dtype))
 
         self._arr = np.asarray(data) if data is not None else np.array([], dtype=_dtype)
         self._fnc = fnc

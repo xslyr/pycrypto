@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 from binance.error import ClientError
 
-from pycrypto.broker import Broker
+from pycrypto.broker.binance import Broker
 
 logger = logging.getLogger("app.spot")
 
