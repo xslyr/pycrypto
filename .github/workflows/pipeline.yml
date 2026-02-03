@@ -101,7 +101,13 @@ jobs:
           poetry install --without doc --no-interaction
           mkdir -p logs
           touch .env
-
+          
+      - name Apply Migrations
+        env:
+          POSTGRES_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'postgres'}}
+          PGVECTOR_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'pgvector'}}
+        run: poetry run task migrate
+        
       - name: Run tests
         env:
           POSTGRES_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'postgres'}}
