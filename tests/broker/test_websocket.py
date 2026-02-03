@@ -25,17 +25,19 @@ def test_websocket_must_create_correct_string_connections():
 
 
 @pytest.mark.binance_websocket
-def test_websocket_start_must_append_data_on_cache():
+def test_websocket_start_must_append_data_on_cache(wait_for_condition):
+    def data_arrived():
+        return (
+            len(Cache.get_klines("BTCUSDT", "1s")) >= 1,
+            len(Cache.get_klines("BTCUSDT", "1m", closed_klines=False)) >= 1,
+            len(Cache.get_klines("BTCUSDT", "1h", closed_klines=False)) >= 1,
+        )
+
     Cache.flushdb()
     params = {"ticker": "BTCUSDT", "intervals": ["1s", "1m", "1h"]}
     ws = BinanceWebsocket(**params)
     ws.start_websocket()
-    time.sleep(5)
-    assert isinstance(ws.stream, BinanceWebsocketClient)
+    sucess = wait_for_condition(data_arrived)
     ws.close_websocket()
-
-    assert len(Cache.get_klines("BTCUSDT", "1s")) >= 1  # 1s ever closed
-    assert len(Cache.get_klines("BTCUSDT", "1m", closed_klines=False)) >= 1
-    assert len(Cache.get_klines("BTCUSDT", "1h", closed_klines=False)) >= 1
-
+    assert sucess, "Data not arrived on cache on time limit."
     Cache.flushdb()

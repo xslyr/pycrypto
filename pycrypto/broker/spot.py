@@ -5,7 +5,6 @@ from typing import Any, Tuple
 
 import numpy as np
 from binance.spot import Spot
-from dotenv import load_dotenv
 
 from pycrypto.broker.utils import columns_dtype
 from pycrypto.commons.utils import Singleton, convert_any_to_timestamp
@@ -31,7 +30,6 @@ class BinanceSpot(metaclass=Singleton):
     ]
 
     def __init__(self, test_mode=False):
-        load_dotenv()
         self.test_mode = test_mode
         self._client = Spot(os.environ["BINANCE_APIKEY"], os.environ["BINANCE_SECRETKEY"])
         logger.info("BinanceSpot initializated.")

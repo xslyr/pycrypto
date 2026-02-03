@@ -7,11 +7,14 @@ from pycrypto.broker.widemonitor import BinanceMonitor
 
 
 @pytest.mark.binance_websocket
-def test_start_widemonitor():
+def test_start_widemonitor(wait_for_condition):
+    def data_arrived():
+        return bm.monitor.size > 0
+
     bm = BinanceMonitor()
     assert bm.monitor.size == 0
 
     bm.start_websocket()
-    time.sleep(5)
-    assert bm.monitor.size > 0
+    sucess = wait_for_condition(data_arrived)
+    assert sucess, "Data not arrived on cache on time limit."
     bm.close_websocket()

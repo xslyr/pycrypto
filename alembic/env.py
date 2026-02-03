@@ -6,7 +6,8 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from pycrypto import db, vdb
-from pycrypto.commons import main_registry, vector_registry
+from pycrypto.commons.models_main import main_registry
+from pycrypto.commons.models_vector import vector_registry
 
 USE_TWOPHASE = False
 

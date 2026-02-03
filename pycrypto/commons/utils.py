@@ -1,6 +1,8 @@
+import time
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
+from zoneinfo import ZoneInfo
 
 # https://python-binance.readthedocs.io/en/latest/constants.html
 
@@ -26,6 +28,8 @@ delta_intervals = {
     "1d": timedelta(days=1),
 }
 
+default_tz = ZoneInfo("UTC")
+
 
 def convert_any_to_datetime(_datetime: Any):
     """Method to convert any datatype for datetime"""
@@ -38,13 +42,13 @@ def convert_any_to_datetime(_datetime: Any):
             adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S")
         case int() | float():
             if len(str(int(_datetime))) > 10:
-                adjusted_start_time = datetime.fromtimestamp(_datetime / 1000)
+                adjusted_start_time = datetime.fromtimestamp(_datetime / 1000, tz=default_tz)
             else:
-                adjusted_start_time = datetime.fromtimestamp(_datetime)
+                adjusted_start_time = datetime.fromtimestamp(_datetime, tz=default_tz)
         case datetime():
             adjusted_start_time = _datetime
 
-    return adjusted_start_time
+    return adjusted_start_time.replace(tzinfo=default_tz)
 
 
 def convert_any_to_timestamp(_datetime: Any):
@@ -55,8 +59,9 @@ def convert_any_to_timestamp(_datetime: Any):
                 raise Exception(
                     "On datetime param we expect str with 19 chars. e.g. 2023-01-01 00:00:00 \n You also consider send timestamp or datetime obj param."
                 )
-            adjusted_start_time = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S")
-            adjusted_start_time = int(adjusted_start_time.timestamp() * 1000)
+            dt = datetime.strptime(_datetime, "%Y-%m-%d %H:%M:%S")
+            dt = dt if time.tzname[0] == "UTC" else dt.astimezone(default_tz)
+            adjusted_start_time = int(dt.timestamp() * 1000)
 
         case int() | float():
             if len(str(_datetime)) < 13:
@@ -65,7 +70,7 @@ def convert_any_to_timestamp(_datetime: Any):
                 adjusted_start_time = _datetime
 
         case datetime():
-            dt = _datetime
+            dt = _datetime if time.tzname[0] == "UTC" else _datetime.replace(tzinfo=ZoneInfo("UTC"))
             adjusted_start_time = int(dt.timestamp() * 1000)
 
         case _:

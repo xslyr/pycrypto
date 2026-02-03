@@ -4,7 +4,7 @@ from pycrypto.commons.cache import Cache
 from pycrypto.commons.database import Database
 from pycrypto.commons.vectordb import VectorDatabase
 
-load_dotenv()
+load_dotenv(override=False)
 db = Database()
 cache = Cache()
 vdb = VectorDatabase()

@@ -1,4 +1,5 @@
 import operator
+import time
 
 import pytest
 
@@ -49,3 +50,16 @@ def operator_funcs():
         "!=": operator.ne,
     }
     return OPERATORS
+
+
+@pytest.fixture
+def wait_for_condition():
+    def _wait(condition_func, timeout=5, interval=0.1):
+        start = time.time()
+        while time.time() - start < timeout:
+            if condition_func():
+                return True
+            time.sleep(interval)
+        return False
+
+    return _wait
