@@ -9,4 +9,6 @@ db = Database()
 cache = Cache()
 vdb = VectorDatabase()
 
+__version__ = "0.1.0"
+
 __all__ = ["Cache", "Database", "VectorDatabase"]

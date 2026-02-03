@@ -5,6 +5,7 @@ from typing import overload
 from binance.websocket.websocket_client import BinanceWebsocketClient
 
 from pycrypto.commons.cache import Cache
+from pycrypto.commons.msg import Message
 from pycrypto.commons.utils import Singleton
 
 # https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams/Kline-Candlestick-Streams
@@ -53,7 +54,7 @@ class BinanceWebsocket(metaclass=Singleton):
 
         self.subscribe_list = subscribe_list
         string_connection = str(self.base_url + append_str)[:-1]
-        logger.debug(f"String connection: {string_connection}")
+        logger.debug(Message.info.websocket_string_conn.format(string_connection))
         return string_connection
 
     def on_multi_klines_message(self, _, message):
@@ -106,7 +107,7 @@ class BinanceWebsocket(metaclass=Singleton):
                 intervals = self.intervals
                 string_connection = self.get_string_connection(ticker, intervals)
 
-            logger.info(f"Starting websocket for ticker {ticker} with intervals {', '.join(intervals)}.")
+            logger.info(Message.info.websocket_start.format(ticker, ", ".join(intervals)))
             multi_klines_stream = len(intervals) > 1
 
             if multi_klines_stream:
@@ -124,6 +125,6 @@ class BinanceWebsocket(metaclass=Singleton):
                     on_error=self.on_error,
                 )
             return True
-        except Exception:
-            logger.exception("Error on starting websocket.")
-            raise
+        except Exception as e:
+            logger.exception(e)
+            raise Exception(Message.error.websocket_connection)

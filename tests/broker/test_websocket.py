@@ -24,7 +24,7 @@ def test_websocket_must_create_correct_string_connections():
     assert "btcusdt@kline_1d" in ws.subscribe_list
 
 
-@pytest.mark.binance_websocket
+@pytest.mark.binance_connection
 def test_websocket_start_must_append_data_on_cache(wait_for_condition):
     def data_arrived():
         return (

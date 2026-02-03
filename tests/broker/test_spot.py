@@ -1,7 +1,10 @@
+import socket
 from datetime import datetime
 
 import pytest
-from binance.error import ClientError
+
+from pycrypto.broker.binance import Broker
+from pycrypto.commons.msg import Message
 
 
 def test_wallet_must_return_dict(broker):
@@ -34,14 +37,21 @@ def test_getklines_must_return_dictvalues(broker):
 def test_buy_must_return_valid_and_invalid_data(broker):
     buy1 = broker.buy(ticker="BTCUSDT", operation_type="MARKET", quantity=1)
     assert buy1 == {}
-    buy2 = broker.buy(ticker="XXXXXX", operation_type="MARKET", quantity=1)
-    assert isinstance(buy2, ClientError)
-    assert buy2.error_message == "Invalid symbol."
+    with pytest.raises(Exception) as error:
+        broker.buy(ticker="XXXXXX", operation_type="MARKET", quantity=1)
+        assert Message.error.buy_coin == str(error.value)
 
 
 def test_sell_must_return_valid_and_invalid_data(broker):
     sell1 = broker.sell(ticker="BTCUSDT", operation_type="MARKET", quantity=1)
     assert sell1 == {}
-    sell2 = broker.sell(ticker="XXXXXX", operation_type="MARKET", quantity=1)
-    assert isinstance(sell2, ClientError)
-    assert sell2.error_message == "Invalid symbol."
+    with pytest.raises(Exception) as error:
+        broker.sell(ticker="XXXXXX", operation_type="MARKET", quantity=1)
+        assert Message.error.sell_coin == str(error.value)
+
+
+@pytest.mark.binance_connection
+def test_tradefee_must_return_exception_without_network(offline_network):
+    with pytest.raises(Exception) as error:
+        Broker(test_mode=True).trade_fee
+        assert Message.error.binance_connection == str(error.value)
