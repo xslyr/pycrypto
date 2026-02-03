@@ -5,8 +5,9 @@ import pytest
 from sqlalchemy.orm import Session
 
 from pycrypto import db
+from pycrypto.broker.utils import kline_columns
 from pycrypto.commons.models_main import Klines_1d
-from pycrypto.commons.utils import BrokerUtils, convert_data_to_numpy
+from pycrypto.orchestration.utils import convert_data_to_numpy
 
 
 def test_dbclass_must_connect():
@@ -120,7 +121,7 @@ def test_dbclass_can_select_with_all_ways_mode(cleaned_1d_table_scenario, params
 
 @pytest.mark.delete_db_data
 def test_dbclass_can_select_klines_without_datetime_params(cleaned_1d_table_scenario):
-    cols_pattern = BrokerUtils.kline_columns[2:-1]
+    cols_pattern = kline_columns[2:-1]
     data = cleaned_1d_table_scenario
 
     klines = db.select_klines("BTCUSDT", "1d", returns="dict", cols=cols_pattern)

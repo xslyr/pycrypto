@@ -1,7 +1,10 @@
+import operator
+
 import pytest
 
 from pycrypto import db
-from pycrypto.commons.utils import Singleton, convert_data_to_numpy
+from pycrypto.commons.utils import Singleton
+from pycrypto.orchestration.utils import convert_data_to_numpy
 from tests.broker_wrapper import BrokerWrapper
 
 
@@ -33,3 +36,16 @@ def cleaned_1d_table_scenario(broker):
     db.clean_kline_table(["1d"])
     db.insert_klines("BTCUSDT", "1d", data)
     return data
+
+
+@pytest.fixture
+def operator_funcs():
+    OPERATORS = {
+        ">": operator.gt,
+        ">=": operator.ge,
+        "<": operator.lt,
+        "<=": operator.le,
+        "==": operator.eq,
+        "!=": operator.ne,
+    }
+    return OPERATORS

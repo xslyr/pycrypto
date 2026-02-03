@@ -1,4 +1,4 @@
-from pycrypto.broker import Broker
+from pycrypto.broker.binance import Broker
 from pycrypto.commons.database import Database
 from pycrypto.commons.utils import Singleton
 from pycrypto.trading.strategy import TradeStrategy

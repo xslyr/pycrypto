@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from pycrypto.commons.database import Database
-from pycrypto.orchestration import Loader
+from pycrypto.orchestration.historical_loader import Loader
 from tests.broker_wrapper import BrokerWrapper
 
 cbn = BrokerWrapper(test_mode=True)

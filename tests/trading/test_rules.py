@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 
-from pycrypto.trading import ItemRule
+from pycrypto.trading.rules import ItemRule
 from pycrypto.trading.technical_analysis import Overlap
 
 
 @pytest.mark.parametrize(
-    "key, operator, value, expected",
+    "key, str_operator, value, expected",
     [
         ("open", ">", 96165.29, False),
         ("open", ">=", 96165.29, True),
@@ -28,9 +28,10 @@ from pycrypto.trading.technical_analysis import Overlap
         (None, "==", 95469.28, True),
     ],
 )
-def test_itemrule_must_be_comparable_with_a_number(numpy_data, key, operator, value, expected):
+def test_itemrule_must_be_comparable_with_a_number(numpy_data, operator_funcs, key, str_operator, value, expected):
     arr = ItemRule(numpy_data, key)  # noqa: F841
-    assert eval(f"arr {operator} {value}") == expected
+    operation = operator_funcs[str_operator]
+    assert operation(arr, value) == expected
 
 
 def test_itemrule_must_be_comparable_one_each_other(numpy_data):

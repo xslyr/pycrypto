@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
+from pycrypto.broker.utils import websocket_opened_maxlen
 from pycrypto.commons.cache import Cache
-from pycrypto.commons.utils import BrokerUtils
 from tests.broker_wrapper import BrokerWrapper
 
 
@@ -87,7 +87,7 @@ def test_cache_appendklines_must_satisfy_maxlen_criteria():
     Cache.flushdb()
     ticker, interval, start_time = "BTCUSDT", "1h", datetime(2025, 1, 1, 0, 0, 0)
     data = BrokerWrapper().get_klines(ticker, interval, start_time)
-    env_maxlen = BrokerUtils.websocket_opened_maxlen[interval]
+    env_maxlen = websocket_opened_maxlen[interval]
     assert Cache.append_klines((ticker, interval), data)
     assert 0.85 * env_maxlen <= len(Cache.get_klines(ticker, interval)) <= 1.15 * env_maxlen
 

@@ -1,214 +1,30 @@
 from datetime import datetime, timedelta
-from operator import itemgetter
-from typing import Any, Dict, Tuple
-
-import numpy as np
+from enum import Enum
+from typing import Any
 
 # https://python-binance.readthedocs.io/en/latest/constants.html
 
+klines_intervals_available = ["1s", "1m", "3m", "5m", "15m", "30m", "1h", "2h", "4h", "6h", "8h", "12h", "1d"]
+KlinesIntervals = Enum("KlinesIntervals", klines_intervals_available)
 
-class Timing:
-    """Class responsable for aggregate timing context constants and common functions correlated with it."""
+widemonitor_intervals_available = ["1h", "4h", "1d"]
+WidemonitorIntervals = Enum("WidemonitorIntervals", widemonitor_intervals_available)
 
-    klines_intervals_available = [
-        "1s",
-        "1m",
-        "3m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "4h",
-        "6h",
-        "8h",
-        "12h",
-        "1d",
-    ]
-    widemonitor_intervals_available = ["1h", "4h", "1d"]
-
-    delta_intervals = {
-        "1s": timedelta(seconds=1),
-        "1m": timedelta(minutes=1),
-        "3m": timedelta(minutes=3),
-        "5m": timedelta(minutes=5),
-        "15m": timedelta(minutes=15),
-        "30m": timedelta(minutes=30),
-        "1h": timedelta(hours=1),
-        "2h": timedelta(hours=2),
-        "4h": timedelta(hours=4),
-        "6h": timedelta(hours=6),
-        "8h": timedelta(hours=8),
-        "12h": timedelta(hours=12),
-        "1d": timedelta(days=1),
-    }
-
-
-class Singleton(type):
-    """Metaclass who implements parent structure of singleton objects"""
-
-    _instance = {}
-
-    def __call__(cls, **kwargs):
-        if cls not in cls._instance:
-            cls._instance[cls] = super().__call__(**kwargs)
-        return cls._instance[cls]
-
-    @classmethod
-    def _reset_all(mcs):
-        mcs._instance.clear()
-
-
-class BrokerUtils:
-    """Class responsable for aggregate broker context constants and common functions correlated with it."""
-
-    kline_columns = [
-        "open_time",
-        "close_time",
-        "open",
-        "close",
-        "high",
-        "low",
-        "base_asset_volume",
-        "quote_asset_volume",
-        "number_of_trades",
-        "taker_buy_base_asset_volume",
-        "taker_buy_quote_asset_volume",
-        "ignore",
-    ]
-
-    ws_columns_names = {
-        "open_time": "t",
-        "close_time": "T",
-        "ticker": "s",
-        "interval": "i",
-        "first_trade_id": "f",
-        "last_trade_id": "L",
-        "open": "o",
-        "close": "c",
-        "high": "h",
-        "low": "l",
-        "base_asset_volume": "v",
-        "number_of_trades": "n",
-        "is_kline_closed": "x",
-        "quote_asset_volume": "q",
-        "taker_buy_base_asset_volume": "V",
-        "taker_buy_quote_asset_volume": "Q",
-        "ignore": "B",
-    }
-
-    columns_dtype = {
-        "open_time": ("open_time", "i8"),
-        "close_time": ("close_time", "i8"),
-        "ticker": ("ticker", "S10"),
-        "interval": ("interval", "S3"),
-        "first_trade_id": ("first_trade_id", "i8"),
-        "last_trade_id": ("last_trade_id", "i8"),
-        "open": ("open", "f8"),
-        "close": ("close", "f8"),
-        "high": ("high", "f8"),
-        "low": ("low", "f8"),
-        "base_asset_volume": ("base_asset_volume", "f8"),
-        "number_of_trades": ("number_of_trades", "i8"),
-        "is_kline_closed": ("is_kline_closed", "?"),
-        "quote_asset_volume": ("quote_asset_volume", "f8"),
-        "taker_buy_base_asset_volume": ("taker_buy_base_asset_volume", "f8"),
-        "taker_buy_quote_asset_volume": ("taker_buy_quote_asset_volume", "f8"),
-        "ignore": ("ignore", "?"),
-    }
-
-    websocket_opened_maxlen = {
-        "1s": 60,
-        "1m": 60,
-        "3m": 20,
-        "5m": 12,
-        "15m": 4,
-        "30m": 2,
-        "1h": 24,
-        "2h": 12,
-        "4h": 6,
-        "6h": 4,
-        "8h": 3,
-        "12h": 2,
-        "1d": 1,
-    }
-
-    widemonitor_columns = {
-        "e": "etype",  # Event type (tipo de evento).
-        "E": "timestamp",  # Event time (tempo do evento) em milissegundos desde a Época Unix.
-        "s": "ticker",  # Símbolo do par de negociação.
-        "p": "var_price",  # Variação de preço (price change) no período.
-        "P": "pct_price",  # Variação percentual do preço (price change percentage) no período.
-        "w": "vwap",  # Preço médio ponderado no período.
-        "x": "last_price",  # Preço do último trade realizado antes do fechamento do ticker.
-        "c": "close",  # Preço de fechamento no período.
-        "Q": "last_qty",  # Quantidade do último trade realizado.
-        "b": "best_bid_price",  # O melhor preço de compra no topo do livro (Bid).
-        "B": "best_bid_qty",  # A quantidade disponível no melhor preço de compra.
-        "a": "best_ask_price",  # O melhor preço de venda no topo do livro (Ask).
-        "A": "best_ask_qty",  # A quantidade disponível no melhor preço de venda.
-        "o": "open",  # Preço de abertura no período.
-        "h": "high",  # Preço mais alto no período.
-        "l": "low",  # Preço mais baixo no período.
-        "v": "base_asset_volume",  # Volume total negociado no período.
-        "q": "quote_asset_volume",  # Volume total em dólares negociado no período.
-        "O": "open_time",  # Timestamp da abertura no período apresentado.
-        "C": "close_time",  # Timestamp de fechamento no período apresentado.
-        "F": "first_trade",  # Primeiro trade (primeiro negócio) no período.
-        "L": "last_trade",  # Último trade (último negócio) no período.
-        "n": "number_of_trades",  # Número total de trades no período.
-    }
-
-    widemonitor_columns_dtype = {
-        "etype": ("etype", "U8"),
-        "timestamp": ("timestamp", "i8"),
-        "ticker": ("ticker", "U15"),
-        "pct_price": ("pct_price", "f8"),
-        "var_price": ("var_price", "f8"),
-        "vwap": ("vwap", "f8"),
-        "last_price": ("last_price", "f8"),
-        "close": ("close", "f8"),
-        "last_qty": ("last_qty", "f8"),
-        "best_bid_price": ("best_bid_price", "f8"),
-        "best_bid_qty": ("best_bid_qty", "f8"),
-        "best_ask_price": ("best_ask_price", "f8"),
-        "best_ask_qty": ("best_ask_qty", "f8"),
-        "open": ("open", "f8"),
-        "high": ("high", "f8"),
-        "low": ("low", "f8"),
-        "base_asset_volume": ("base_asset_volume", "f8"),
-        "quote_asset_volume": ("quote_asset_volume", "f8"),
-        "open_time": ("open_time", "f8"),
-        "close_time": ("close_time", "f8"),
-        "first_trade": ("first_trade", "i8"),
-        "last_trade": ("last_trade", "i8"),
-        "number_of_trades": ("number_of_trades", "i8"),
-    }
-
-
-def convert_data_to_numpy(data: list[Dict | Tuple], from_websocket=False, **kwargs) -> np.array:
-    """Method to prepare and convert crude data to numpy array"""
-    result = None
-    if from_websocket:
-        cols = kwargs.get("cols", BrokerUtils.kline_columns[2:-1])
-        dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
-        col_ids = itemgetter(*cols)(BrokerUtils.ws_columns_names)
-        arr = (itemgetter(*col_ids)(i) for i in data)
-        result = np.fromiter(arr, dtype=dtypes)
-    else:
-        check = data[0] if len(data) > 0 else []
-        if isinstance(check, dict):
-            cols = kwargs.get("cols", data[0].keys())
-            dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
-            arr = [tuple(itemgetter(*cols)(row)) for row in data]
-            result = np.array(arr, dtype=dtypes)
-        else:
-            cols = kwargs.get("cols", BrokerUtils.kline_columns[2:-1])
-            dtypes = list(itemgetter(*cols)(BrokerUtils.columns_dtype))
-            arr = data
-            result = np.array(arr, dtype=dtypes)
-
-    return result
+delta_intervals = {
+    "1s": timedelta(seconds=1),
+    "1m": timedelta(minutes=1),
+    "3m": timedelta(minutes=3),
+    "5m": timedelta(minutes=5),
+    "15m": timedelta(minutes=15),
+    "30m": timedelta(minutes=30),
+    "1h": timedelta(hours=1),
+    "2h": timedelta(hours=2),
+    "4h": timedelta(hours=4),
+    "6h": timedelta(hours=6),
+    "8h": timedelta(hours=8),
+    "12h": timedelta(hours=12),
+    "1d": timedelta(days=1),
+}
 
 
 def convert_any_to_datetime(_datetime: Any):
@@ -263,6 +79,21 @@ def get_timestamp_range_list(start: datetime, end: datetime, interval: str):
 
     _start = int(start.timestamp())
     _end = int(end.timestamp())
-    _steps = int(Timing.delta_intervals[interval].total_seconds())
+    _steps = int(delta_intervals[interval].total_seconds())
 
     return list(range(_start, _end + 1, _steps))
+
+
+class Singleton(type):
+    """Metaclass who implements parent structure of singleton objects"""
+
+    _instance = {}
+
+    def __call__(cls, **kwargs):
+        if cls not in cls._instance:
+            cls._instance[cls] = super().__call__(**kwargs)
+        return cls._instance[cls]
+
+    @classmethod
+    def _reset_all(mcs):
+        mcs._instance.clear()

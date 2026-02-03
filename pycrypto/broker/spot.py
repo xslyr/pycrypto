@@ -7,7 +7,8 @@ import numpy as np
 from binance.spot import Spot
 from dotenv import load_dotenv
 
-from pycrypto.commons.utils import BrokerUtils, Singleton, convert_any_to_timestamp
+from pycrypto.broker.utils import columns_dtype
+from pycrypto.commons.utils import Singleton, convert_any_to_timestamp
 
 # https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data
 
@@ -60,7 +61,7 @@ class BinanceSpot(metaclass=Singleton):
             raise e
 
     def convert_spotklines_to_numpy(self, data: list[Tuple]) -> np.ndarray:
-        dtypes = list(itemgetter(*self.spot_cols)(BrokerUtils.columns_dtype))
+        dtypes = list(itemgetter(*self.spot_cols)(columns_dtype))
         return np.fromiter((tuple(row[:-1]) for row in data), dtype=dtypes)
 
     def klines(

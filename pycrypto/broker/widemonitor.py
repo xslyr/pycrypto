@@ -5,8 +5,8 @@ from operator import itemgetter
 import numpy as np
 from binance.websocket.websocket_client import BinanceWebsocketClient
 
-from pycrypto.broker.nputils import upsert_monitor_arr
-from pycrypto.commons.utils import BrokerUtils, Singleton
+from pycrypto.broker.utils import upsert_monitor_arr, widemonitor_columns, widemonitor_columns_dtype
+from pycrypto.commons.utils import Singleton
 
 logger = logging.getLogger("app.websocket")
 
@@ -22,8 +22,8 @@ class BinanceMonitor(metaclass=Singleton):
     def __init__(self):
         self.__base_url = "wss://stream.binance.com:9443/ws/"
         self.__subscription = "!ticker@arr"
-        self.__monitor_cols = list(BrokerUtils.widemonitor_columns)[1:]
-        self.__monitor_dtypes = list(BrokerUtils.widemonitor_columns_dtype.values())[1:]
+        self.__monitor_cols = list(widemonitor_columns)[1:]
+        self.__monitor_dtypes = list(widemonitor_columns_dtype.values())[1:]
         self.__monitor: np.ndarray = np.empty(0, dtype=self.__monitor_dtypes)
 
     @property

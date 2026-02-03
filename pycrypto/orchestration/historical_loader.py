@@ -9,8 +9,8 @@ import numpy as np
 from tqdm import tqdm
 
 from pycrypto import db
-from pycrypto.broker import Broker
-from pycrypto.commons.utils import Timing, convert_any_to_datetime, get_timestamp_range_list
+from pycrypto.broker.binance import Broker
+from pycrypto.commons.utils import convert_any_to_datetime, delta_intervals, get_timestamp_range_list
 
 logger = logging.getLogger("app")
 
@@ -146,7 +146,7 @@ class Loader:
             start, end = self.__common_datetime_conversions(intervals, from_datetime, between_datetimes, verbose)
 
             for i in intervals[::-1]:
-                delta = Timing.delta_intervals[i]
+                delta = delta_intervals[i]
                 intervals_between_datetimes = int((end - start) / delta)
                 full_loops, final_round = divmod(intervals_between_datetimes, 1000)
                 if verbose:
