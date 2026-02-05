@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from pycrypto import db
 from pycrypto.broker.utils import kline_columns
-from pycrypto.commons.models_main import Klines_1d
+from pycrypto.models.main import Klines_1d
 from pycrypto.orchestration.utils import convert_data_to_numpy
 
 

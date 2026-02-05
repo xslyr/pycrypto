@@ -92,20 +92,17 @@ disable = [
     "too-many-arguments",           # R0913
     "too-many-locals",              # R0914
     "too-many-positional-arguments",# R0917
-
     "no-member",                    # E1101
     "dangerous-default-value",      # W0102
     "unnecessary-lambda",           # W0108
     "fixme",                        # W0511: TODOs
-
     "missing-module-docstring",   # C0114
     "missing-class-docstring",    # C0115
     "missing-function-docstring", # C0116
-
     "broad-exception-raised",       # W0719
     "broad-exception-caught",       # R0914
-
     "logging-fstring-interpolation",# W1203
+    "logging-format-interpolation", # W1202
     "invalid-overridden-method",    # W0236 
     "consider-using-f-string",      # C0209
     "invalid-name",                 # C0103

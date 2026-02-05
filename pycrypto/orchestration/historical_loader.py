@@ -10,6 +10,8 @@ from tqdm import tqdm
 
 from pycrypto import db
 from pycrypto.broker.binance import Broker
+from pycrypto.commons.exception import DefaultException
+from pycrypto.commons.messages import InfoMessage
 from pycrypto.commons.utils import convert_any_to_datetime, delta_intervals, get_timestamp_range_list
 
 logger = logging.getLogger("app")
@@ -40,10 +42,10 @@ class Loader:
 
         """
         if from_datetime == "" and between_datetimes == ("", ""):
-            raise Exception("Is necessary one of from_datetime or between_datetime param.")
+            raise DefaultException.orchestration_one_datetime_param_needed
 
         if from_datetime != "" and between_datetimes != ("", ""):
-            raise Exception("Is necessary ONLY one of from_datetime or between_datetime param.")
+            raise DefaultException.orchestration_only_one_datetime_param_allow
 
     def __common_datetime_conversions(
         self, intervals, from_datetime, between_datetimes, verbose
@@ -71,9 +73,8 @@ class Loader:
 
         if verbose:
             intv = ", ".join(intervals)
-            logger.info(
-                f"Loading Data from Binance to Database\n. Intervals ({intv})\tBetween datetimes ({start} e {end})\n"
-            )
+
+            logger.info(InfoMessage.loader_begin_message.format(intv, start, end))
 
         return start, end
 

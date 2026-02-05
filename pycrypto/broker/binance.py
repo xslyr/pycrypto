@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 import numpy as np
-import requests
 
 from pycrypto.broker.websocket import BinanceWebsocket
 from pycrypto.broker.widemonitor import BinanceMonitor
@@ -59,7 +58,7 @@ class Broker(metaclass=Singleton):
 
         return self._trade_fee
 
-    def start_websocket(self, ticker="BTCUSDT", intervals=["1s", "1m", "1h"]):
+    def start_websocket(self, ticker: str = "BTCUSDT", intervals: list[str] = ["1s", "1m", "1h"]):
         """Method to start websocket receiving klines.
 
         Args:
@@ -73,17 +72,8 @@ class Broker(metaclass=Singleton):
             Boolean indicating the success or failure of the execution.
 
         """
-        try:
-            self.websocket = BinanceWebsocket(ticker, intervals)
-            self.websocket.start_websocket()
-            return True
-        except requests.exceptions.ConnectionError:
-            e = "Error on binance connection. Please verify environment variables or internet"
-            logger.info(e)
-            return e
-        except Exception:
-            logger.exception("Error on websocket initialization.")
-            return False
+        self.websocket = BinanceWebsocket(ticker=ticker, intervals=intervals)
+        return self.websocket.start_websocket()
 
     def stop_websocket(self):
         """Method to stop websocket info receiving.
@@ -95,12 +85,7 @@ class Broker(metaclass=Singleton):
             Boolean indicating the success or failure of the execution.
 
         """
-        try:
-            self.websocket.close_websocket()
-            return True
-        except Exception:
-            logger.exception("Error on close websocket")
-            return False
+        return self.websocket.close_websocket()
 
     def get_klines(
         self,
@@ -162,13 +147,8 @@ class Broker(metaclass=Singleton):
         Returns:
             Boolean indicating the success or failure of the execution.
         """
-        try:
-            self.widemonitor = BinanceMonitor()
-            self.widemonitor.start_websocket()
-            return True
-        except Exception:
-            logger.exception("Error on initialization o widemonitor.")
-            return False
+        self.widemonitor = BinanceMonitor()
+        return self.widemonitor.start_websocket()
 
     def stop_widemonitor(self):
         """Method to stop widemonitor.
@@ -179,9 +159,4 @@ class Broker(metaclass=Singleton):
         Returns:
             Boolean indicating the success or failure of the execution.
         """
-        try:
-            self.widemonitor.close_websocket()
-            return True
-        except Exception:
-            logger.exception("Error on stoping widemonitor.")
-            return False
+        return self.widemonitor.close_websocket()

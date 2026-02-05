@@ -1,13 +1,13 @@
 import logging
 import os
-from operator import itemgetter
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 from binance.spot import Spot
 
-from pycrypto.broker.utils import columns_dtype
-from pycrypto.commons.msg import Error, Message
+from pycrypto.broker.utils import convert_spotklines_to_numpy
+from pycrypto.commons.exception import DefaultException
+from pycrypto.commons.messages import InfoMessage, SucessMessage
 from pycrypto.commons.utils import Singleton, convert_any_to_timestamp
 
 # https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data
@@ -33,7 +33,7 @@ class BinanceSpot(metaclass=Singleton):
     def __init__(self, test_mode=False):
         self.test_mode = test_mode
         self._client = Spot(os.environ["BINANCE_APIKEY"], os.environ["BINANCE_SECRETKEY"])
-        logger.info(Message.info.spot_started)
+        logger.info(InfoMessage.spot_started)
 
     def wallet(self):
         wallet = {dc["asset"]: dc["free"] for dc in self._client.user_asset()}
@@ -58,11 +58,7 @@ class BinanceSpot(metaclass=Singleton):
             return trade_fee
         except Exception as e:
             logger.exception(e)
-            raise Exception(Error.websocket_connection)
-
-    def convert_spotklines_to_numpy(self, data: list[Tuple]) -> np.ndarray:
-        dtypes = list(itemgetter(*self.spot_cols)(columns_dtype))
-        return np.fromiter((tuple(row[:-1]) for row in data), dtype=dtypes)
+            raise DefaultException.websocket_connection from e
 
     def klines(
         self,
@@ -81,16 +77,16 @@ class BinanceSpot(metaclass=Singleton):
                 limit=limit,
             )
             if not as_dict:
-                data_return = self.convert_spotklines_to_numpy(data)
+                data_return = convert_spotklines_to_numpy(data, self.spot_cols)
 
             else:
                 data_return = [dict(zip(self.spot_cols, row)) for row in data]
 
-            logger.debug(Message.sucess.buy_coin)
+            logger.debug(SucessMessage.buy_coin)
             return data_return
         except Exception as e:
             logger.warning(e)
-            raise Exception(Message.error.binance_kline_request)
+            raise DefaultException.spot_kline_request from e
 
     def buy(self, ticker: str, quantity: int, operation_type="MARKET"):
         try:
@@ -105,11 +101,11 @@ class BinanceSpot(metaclass=Singleton):
             else:
                 buy_order = self._client.new_order(**params)
 
-            logger.info(Message.sucess.buy_coin)
+            logger.info(SucessMessage.buy_coin)
             return buy_order
         except Exception as e:
             logger.exception(e)
-            return Exception(Message.error.buy_coin)
+            raise DefaultException.spot_buy_coin from e
 
     def sell(self, ticker: str, quantity: int, operation_type="MARKET"):
         try:
@@ -124,8 +120,8 @@ class BinanceSpot(metaclass=Singleton):
             else:
                 sell_order = self._client.new_order(**params)
 
-            logger.info(Message.sucess.sell_coin)
+            logger.info(SucessMessage.sell_coin)
             return sell_order
         except Exception as e:
             logger.warning(e)
-            return Exception(Message.error.sell_coin)
+            raise DefaultException.spot_sell_coin from e

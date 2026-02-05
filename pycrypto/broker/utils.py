@@ -1,3 +1,6 @@
+from operator import itemgetter
+from typing import Tuple
+
 import numpy as np
 
 kline_columns = [
@@ -157,5 +160,18 @@ def aggregate_structured(arr, group_key, agg_dict):
 
 
 def ticker_contains(data: np.ndarray, ticker_filter: str = "USDT"):
-    mask = np.char.find(data["ticker"], ticker_filter)
-    return data[mask] if mask != -1 else np.array([], dtype=data.dtype)
+    # mask = np.char.find(data["ticker"], ticker_filter)
+    # return data[mask] if mask != -1 else np.array([], dtype=data.dtype)
+    mask = np.char.find(data["ticker"].astype(str), ticker_filter) != -1
+    return data[mask]
+
+
+def convert_spotklines_to_numpy(
+    data: list[Tuple], spot_cols: list = kline_columns[:-1], ignore_last_column=True
+) -> np.ndarray:
+    dtypes = list(itemgetter(*spot_cols)(columns_dtype))
+
+    if ignore_last_column:
+        return np.fromiter((tuple(row[:-1]) for row in data), dtype=dtypes)
+
+    return np.fromiter(data, dtype=dtypes)

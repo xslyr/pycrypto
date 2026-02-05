@@ -3,6 +3,7 @@ import time
 import pytest
 from binance.websocket.websocket_client import BinanceWebsocketClient
 
+from pycrypto.broker.binance import Broker
 from pycrypto.broker.websocket import BinanceWebsocket
 from pycrypto.commons.cache import Cache
 
@@ -35,9 +36,9 @@ def test_websocket_start_must_append_data_on_cache(wait_for_condition):
 
     Cache.flushdb()
     params = {"ticker": "BTCUSDT", "intervals": ["1s", "1m", "1h"]}
-    ws = BinanceWebsocket(**params)
-    ws.start_websocket()
+    broker = Broker(test_mode=True)
+    broker.start_websocket(**params)
     sucess = wait_for_condition(data_arrived)
-    ws.close_websocket()
+    broker.stop_websocket()
     assert sucess, "Data not arrived on cache on time limit."
     Cache.flushdb()
