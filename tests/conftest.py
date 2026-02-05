@@ -1,4 +1,5 @@
 import operator
+import time
 
 import pytest
 
@@ -49,3 +50,25 @@ def operator_funcs():
         "!=": operator.ne,
     }
     return OPERATORS
+
+
+@pytest.fixture
+def wait_for_condition():
+    def _wait(condition_func, timeout=5, interval=0.1):
+        start = time.time()
+        while time.time() - start < timeout:
+            if condition_func():
+                return True
+            time.sleep(interval)
+        return False
+
+    return _wait
+
+
+@pytest.fixture
+def offline_network():
+    import pytest_socket
+
+    pytest_socket.disable_socket()
+    yield
+    pytest_socket.enable_socket()

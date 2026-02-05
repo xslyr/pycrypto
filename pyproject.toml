@@ -40,6 +40,7 @@ dev = [
     "pylint (>=4.0.4,<5.0.0)",
     "taskipy (>=1.14.1,<2.0.0)",
     "ruff (>=0.14.10,<0.15.0)",
+    "pytest-socket (>=0.7.0,<0.8.0)",
 ]
 doc = [
     "mkdocs (>=1.6.1,<2.0.0)",
@@ -59,8 +60,8 @@ lint = "pylint pycrypto/"
 ruff = "ruff format ./pycrypto && ruff check --fix ./pycrypto"
 migrate = "alembic upgrade head"
 run = "fastapi dev run.py"
-test_github = "pytest -s -m 'not binance_websocket' "
-test = "pytest -s -v --cov=pycrypto"
+test_github = "pytest -s -m 'not binance_connection' "
+test = "pytest -v --cov=pycrypto"
 post_test = "coverage html"
 docs = "mkdocs serve -w . --watch-theme -a 'localhost:8081'"
 
@@ -72,7 +73,7 @@ python_files = "test_*.py"
 addopts = "--doctest-modules"
 markers = [
     "delete_db_data: Tests who can delete some info on postgres database.", 
-    "binance_websocket: Tests who use binance websocket."
+    "binance_connection: Tests who use binance websocket."
     ]
 
 
@@ -91,20 +92,17 @@ disable = [
     "too-many-arguments",           # R0913
     "too-many-locals",              # R0914
     "too-many-positional-arguments",# R0917
-
     "no-member",                    # E1101
     "dangerous-default-value",      # W0102
     "unnecessary-lambda",           # W0108
     "fixme",                        # W0511: TODOs
-
     "missing-module-docstring",   # C0114
     "missing-class-docstring",    # C0115
     "missing-function-docstring", # C0116
-
     "broad-exception-raised",       # W0719
     "broad-exception-caught",       # R0914
-
     "logging-fstring-interpolation",# W1203
+    "logging-format-interpolation", # W1202
     "invalid-overridden-method",    # W0236 
     "consider-using-f-string",      # C0209
     "invalid-name",                 # C0103

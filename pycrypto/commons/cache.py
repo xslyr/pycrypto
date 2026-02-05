@@ -10,6 +10,7 @@ from redis.exceptions import ConnectionError as RedisConnectionError, ResponseEr
 from redis.typing import ResponseT
 
 from pycrypto.broker.utils import websocket_opened_maxlen
+from pycrypto.commons.exception import DefaultException
 from pycrypto.commons.utils import Singleton
 
 logger = logging.getLogger("app")
@@ -86,9 +87,7 @@ class Cache(metaclass=Singleton):
             case tuple() | list():
                 redis_key = "@kline_".join(stream)
             case _:
-                raise Exception(
-                    "Stream parameter must be a tuple of (ticker,interval) or string like ticker@kline_interval."
-                )
+                raise DefaultException.cache_stream_parameter_format
 
         redis_key = redis_key.lower()
         redis_key += ":closed" if closed_klines else ":opened"
@@ -118,9 +117,7 @@ class Cache(metaclass=Singleton):
             case tuple() | list():
                 redis_key = "@kline_".join(stream)
             case _:
-                raise Exception(
-                    "Stream parameter must be a tuple of (ticker,interval) or string like ticker@kline_interval."
-                )
+                raise DefaultException.cache_stream_parameter_format
 
         redis_key = redis_key.lower()
         redis_key += ":closed" if closed_klines else ":opened"
@@ -185,9 +182,10 @@ class Cache(metaclass=Singleton):
             logger.warning(f"The key {redis_key} not exists.")
             return {}
 
-        except Exception:
-            logger.exception(f"Error on get_info_stream of ticker {ticker}, interval {interval}")
-            raise
+        except Exception as e:
+            err = DefaultException.cache_infostream
+            logger.exception(str(err.args[0]))
+            raise err from e
 
     @classmethod
     def delete_stream(cls, ticker: str, interval: str, closed_klines=True) -> bool:
@@ -214,9 +212,7 @@ class Cache(metaclass=Singleton):
             case tuple() | list():
                 _stream = "@kline_".join(stream)
             case _:
-                raise Exception(
-                    "Stream parameter must be a tuple of (ticker,interval) or string like ticker@kline_interval."
-                )
+                raise DefaultException.cache_stream_parameter_format
 
         _stream = _stream.lower()
         _stream += ":closed" if closed_klines else ":opened"
@@ -225,9 +221,10 @@ class Cache(metaclass=Singleton):
         try:
             pipe.xdel(_stream, list_ids)
             return True
-        except Exception:
-            logger.exception("Error on deletion stream data.")
-            raise
+        except Exception as e:
+            err = DefaultException.cache_deletion
+            logger.exception(err.args[0])
+            raise err from e
 
     @classmethod
     def delete_data_in_stream(cls, ticker: str, interval: str, nlast: int = 0, closed_klines=True):

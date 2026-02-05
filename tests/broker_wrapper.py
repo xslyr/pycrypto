@@ -9,6 +9,8 @@ import numpy as np
 from binance.error import ClientError
 
 from pycrypto.broker.binance import Broker
+from pycrypto.broker.utils import convert_spotklines_to_numpy
+from pycrypto.commons.exception import DefaultException, PycryptoException
 
 logger = logging.getLogger("app.spot")
 
@@ -31,13 +33,13 @@ class BrokerWrapper(Broker):
         mock_file = self.mock_path / filename
 
         if not mock_file.exists() and self.is_ci_env:
-            raise FileNotFoundError(f"Mock files {mock_file} not fount! It's required for CI environment.")
+            raise DefaultException.test_wrapper_file_not_found
 
         try:
             if mock_required and (self.is_ci_env or mock_file.exists()):
                 with open(mock_file, "r") as f:
                     data = json.load(f)
-                    return super().spot.convert_spotklines_to_numpy(data) if not as_dict else data
+                    return convert_spotklines_to_numpy(data) if not as_dict else data
 
             data = super().get_klines(ticker, interval, start_time, **kwargs)
             self.mock_path.mkdir(parents=True, exist_ok=True)
@@ -48,9 +50,10 @@ class BrokerWrapper(Broker):
 
             return data
 
-        except Exception:
-            logger.exception("Error on getklines of BrokerWrapper")
-            raise
+        except Exception as e:
+            err = DefaultException.test_wrapper_getklines
+            logger.exception(err.args[0])
+            raise err from e
 
     def buy(self, ticker: str, quantity: int, operation_type: str = "MARKET"):
         params = [ticker, quantity, operation_type]
@@ -74,7 +77,7 @@ class BrokerWrapper(Broker):
         mock_file = self.mock_path / "wallet"
 
         if not mock_file.exists() and self.is_ci_env:
-            raise FileNotFoundError(f"Mock files {mock_file} not fount! It's required for CI environment.")
+            raise DefaultException.test_wrapper_file_not_found
 
         try:
             if mock_required and (self.is_ci_env or mock_file.exists()):
@@ -88,15 +91,16 @@ class BrokerWrapper(Broker):
                 json.dump(data, f)
 
             return data
-        except Exception:
-            logger.exception("Error on wallet of BrokerWrapper")
-            raise
+        except Exception as e:
+            err = DefaultException.test_wrapper_wallet
+            logger.exception(err.args[0])
+            raise err from e
 
     def trade_fee(self, mock_required=True) -> dict:
         mock_file = self.mock_path / "trade_fee"
 
         if not mock_file.exists() and self.is_ci_env:
-            raise FileNotFoundError(f"Mock files {mock_file} not fount! It's required for CI environment.")
+            raise DefaultException.test_wrapper_file_not_found
 
         try:
             if mock_required and (self.is_ci_env or mock_file.exists()):
@@ -110,6 +114,7 @@ class BrokerWrapper(Broker):
                 json.dump(data, f)
 
             return data
-        except Exception:
-            logger.exception("Error on tradefee of BrokerWrapper")
-            raise
+        except Exception as e:
+            err = DefaultException.test_wrapper_tradefee
+            logger.exception(err.args[0])
+            raise err from e

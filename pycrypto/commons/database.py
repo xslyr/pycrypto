@@ -8,7 +8,8 @@ from sqlalchemy import create_engine, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-import pycrypto.commons.models_main as m
+import pycrypto.models.main as m
+from pycrypto.commons.exception import DefaultException
 from pycrypto.commons.utils import Singleton, convert_any_to_timestamp, klines_intervals_available
 
 logger = logging.getLogger("app")
@@ -57,9 +58,9 @@ class Database(metaclass=Singleton):
         models = [self.ModelMapping.get(i) for i in intervals]
 
         if len(models) == 0:
-            err = f"Models not found to intervals {intervals}."
-            logger.error(err)
-            raise Exception(err)
+            err = DefaultException.interval_not_available
+            logger.error(err.args[0])
+            raise err
 
         try:
             with self.session_factory() as session:
@@ -67,8 +68,9 @@ class Database(metaclass=Singleton):
                     session.execute(delete(model))
                 session.commit()
         except Exception as e:
-            logger.exception("Error on clen_kline_table.")
-            raise e
+            err = DefaultException.database_cleaning_kline_table
+            logger.exception(err.args[0])
+            raise err from e
 
     def select_klines(
         self,
@@ -79,9 +81,9 @@ class Database(metaclass=Singleton):
         **kwargs,
     ):
         if interval not in klines_intervals_available:
-            e = "Interval not available."
-            logger.exception(e)
-            raise Exception(e)
+            err = DefaultException.interval_not_available
+            logger.exception(err.args[0])
+            raise err
 
         returns = kwargs.get("returns", "model")
         cols = kwargs.get("cols", "")
@@ -94,10 +96,10 @@ class Database(metaclass=Singleton):
             else:
                 try:
                     model_cols = [model.__table__.columns[c] for c in cols]
-                except Exception:
-                    e = "Some column are not available."
-                    logger.exception(e)
-                    raise
+                except Exception as e:
+                    err = DefaultException.database_column_not_available
+                    logger.exception(err.args[0])
+                    raise err from e
 
         match model_cols:
             case None:
@@ -153,5 +155,6 @@ class Database(metaclass=Singleton):
             return True
 
         except Exception as e:
-            logger.exception(f"Error klines insertion ({ticker}, {interval}): {e}")
-            raise e
+            err = DefaultException.database_insertion_kline
+            logger.exception(err.args[0])
+            raise err from e

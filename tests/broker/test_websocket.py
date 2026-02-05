@@ -3,6 +3,7 @@ import time
 import pytest
 from binance.websocket.websocket_client import BinanceWebsocketClient
 
+from pycrypto.broker.binance import Broker
 from pycrypto.broker.websocket import BinanceWebsocket
 from pycrypto.commons.cache import Cache
 
@@ -24,18 +25,20 @@ def test_websocket_must_create_correct_string_connections():
     assert "btcusdt@kline_1d" in ws.subscribe_list
 
 
-@pytest.mark.binance_websocket
-def test_websocket_start_must_append_data_on_cache():
+@pytest.mark.binance_connection
+def test_websocket_start_must_append_data_on_cache(wait_for_condition):
+    def data_arrived():
+        return (
+            len(Cache.get_klines("BTCUSDT", "1s")) >= 1,
+            len(Cache.get_klines("BTCUSDT", "1m", closed_klines=False)) >= 1,
+            len(Cache.get_klines("BTCUSDT", "1h", closed_klines=False)) >= 1,
+        )
+
     Cache.flushdb()
     params = {"ticker": "BTCUSDT", "intervals": ["1s", "1m", "1h"]}
-    ws = BinanceWebsocket(**params)
-    ws.start_websocket()
-    time.sleep(5)
-    assert isinstance(ws.stream, BinanceWebsocketClient)
-    ws.close_websocket()
-
-    assert len(Cache.get_klines("BTCUSDT", "1s")) >= 1  # 1s ever closed
-    assert len(Cache.get_klines("BTCUSDT", "1m", closed_klines=False)) >= 1
-    assert len(Cache.get_klines("BTCUSDT", "1h", closed_klines=False)) >= 1
-
+    broker = Broker(test_mode=True)
+    broker.start_websocket(**params)
+    sucess = wait_for_condition(data_arrived)
+    broker.stop_websocket()
+    assert sucess, "Data not arrived on cache on time limit."
     Cache.flushdb()

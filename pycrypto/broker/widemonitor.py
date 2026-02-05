@@ -53,7 +53,7 @@ class BinanceMonitor(metaclass=Singleton):
     def close_websocket(self):
         self._stream.stop()
 
-    def start_websocket(self) -> bool:
+    def start_websocket(self):
         try:
             url = self.__base_url + self.__subscription
             self._stream = BinanceWebsocketClient(

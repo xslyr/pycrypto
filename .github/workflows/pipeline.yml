@@ -1,23 +1,24 @@
 name: Pipeline
-on: [pull_request]
+on: [pull_request, push]
 
 env:
   PYTHON_VERSION: 3.13
   POETRY_VERSION: 2.2.1
   GITHUB_ACTIONS: true
+  TZ: UTC
   BINANCE_APIKEY: ${{ secrets.BINANCE_APIKEY }}
   BINANCE_SECRETKEY: ${{ secrets.BINANCE_SECRETKEY }}
   POSTGRES_HOST: postgres
-  POSTGRES_USER: admin
-  POSTGRES_PASSWORD: minhasenha123
+  POSTGRES_USER: pycrypto
+  POSTGRES_PASSWORD: mypassword123
   POSTGRES_DB: pycrypto
   POSTGRES_PORT: 5432
   REDIS_HOST: redis
   REDIS_PORT: 6379
   PGVECTOR_HOST: pgvector
   PGVECTOR_PORT: 5433
-  PGVECTOR_USER: pgvector
-  PGVECTOR_PASSWORD: outrasenha321
+  PGVECTOR_USER: pycrypto
+  PGVECTOR_PASSWORD: mypassword123
   PGVECTOR_DB: pycrypto
 
 jobs:
@@ -74,7 +75,6 @@ jobs:
           --health-retries 5
       pgvector:
         image: pgvector/pgvector:pg16
-        #command: postgres -c config_file=/etc/postgresql/postgresql.conf -c hba_file=/etc/postgresql/pg_hba.conf
         env:
           POSTGRES_USER: ${{ env.PGVECTOR_USER }}
           POSTGRES_PASSWORD: ${{ env.PGVECTOR_PASSWORD }}
@@ -101,10 +101,17 @@ jobs:
           poetry install --without doc --no-interaction
           mkdir -p logs
           touch .env
-
+          
+      - name: Apply Migrations
+        env:
+          POSTGRES_HOST: ${{ env.GITHUB_ACTIONS && 'localhost' || 'postgres'}}
+          REDIS_HOST: ${{ env.GITHUB_ACTIONS && 'localhost' || 'redis'}}
+          PGVECTOR_HOST: ${{ env.GITHUB_ACTIONS && 'localhost' || 'pgvector'}}
+        run: poetry run task migrate
+        
       - name: Run tests
         env:
-          POSTGRES_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'postgres'}}
-          REDIS_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'redis'}}
-          PGVECTOR_HOST: ${{ env.GITHUB_ACTIONS &&  'localhost' || 'pgvector'}}
+          POSTGRES_HOST: ${{ env.GITHUB_ACTIONS && 'localhost' || 'postgres'}}
+          REDIS_HOST: ${{ env.GITHUB_ACTIONS && 'localhost' || 'redis'}}
+          PGVECTOR_HOST: ${{ env.GITHUB_ACTIONS && 'localhost' || 'pgvector'}}
         run: poetry run task test_github
